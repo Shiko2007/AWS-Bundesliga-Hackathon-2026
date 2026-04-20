@@ -6,6 +6,42 @@ function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hovered, setHovered] = useState(false);
+  const [error, setError] = useState('');        // stores any error message
+  const [loading, setLoading] = useState(false); // tracks if request is in progress
+
+  async function handleLogin() {
+    // Basic check — don't send if fields are empty
+    if (!email || !password) {
+      setError('Please fill in all fields')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError('')
+
+const response = await fetch("http://localhost:4000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })  // sends email and password to server
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log("Logged in!", data)
+        // e.g. save token: localStorage.setItem("token", data.token)
+        // e.g. redirect:   navigate("/home")
+      } else {
+        setError(data.error || "Login failed")
+      }
+
+    } catch (err) {
+      setError("Could not connect to server")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div style={styles.screen}>
@@ -35,12 +71,17 @@ function Login() {
           style={styles.input}
         />
 
+        {/* Shows error message if something goes wrong */}
+        {error && <p style={styles.error}>{error}</p>}
+
         <button
-          style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}) }}
+          onClick={handleLogin}   // calls handleLogin when clicked
+          disabled={loading}      // disables button while request is in progress
+          style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}), ...(loading ? styles.buttonDisabled : {}) }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          Login
+          {loading ? "Logging in..." : "Login"}  {/* changes text while loading */}
         </button>
 
         <p style={styles.footer}>
@@ -107,6 +148,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   buttonHover: {
     backgroundColor: '#b81a13',
   },
+  buttonDisabled: {
+    backgroundColor: '#aaa',  // greys out while loading
+    cursor: 'not-allowed',
+  },
+  error: {
+    color: '#E32219',
+    fontSize: '13px',
+    margin: '0',
+  },
   footer: {
     fontSize: '13px',
     color: '#777',
@@ -122,10 +172,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '170px',
     height: '170px',
     objectFit: 'contain',
-    
     marginBottom: '4px',
   },
-  
 };
 
 export default Login;
