@@ -29,29 +29,31 @@ function Signup() {
   const [favoriteTeam, setFavoriteTeam] = useState('');
   const [hovered, setHovered] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [error, setError] = useState('');         // stores error messages
+  const [loading, setLoading] = useState(false);  // tracks if request is in progress
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const teams = [
-  { name: 'Bayern Munich', logo: bayernLogo },
-  { name: 'Borussia Dortmund', logo: dortmundLogo },
-  { name: 'Bayer Leverkusen', logo: leverkusenLogo },
-  { name: 'RB Leipzig', logo: leipzigLogo },
-  { name: 'Eintracht Frankfurt', logo: frankfurtLogo },
-  { name: 'VfB Stuttgart', logo: stuttgartLogo },
-  { name: 'SC Freiburg', logo: freiburgLogo },
-  { name: 'Union Berlin', logo: unionLogo },
-  { name: 'Werder Bremen', logo: bremenLogo },
-  { name: 'Borussia Mönchengladbach', logo: gladbachLogo },
-  { name: 'Wolfsburg', logo: wolfsburgLogo },
-  { name: 'Mainz 05', logo: mainzLogo },
-  { name: 'FC Augsburg', logo: augsburgLogo },
-  { name: 'TSG Hoffenheim', logo: hoffenheimLogo },
-  { name: 'Heidenheim', logo: heidenheimLogo },
-  { name: 'FC St. Pauli', logo: stpauliLogo },
-  { name: 'Hamburger SV', logo: hsvLogo },
-  { name: '1. FC Köln', logo: kolnLogo },
-];
+    { name: 'Bayern Munich', logo: bayernLogo },
+    { name: 'Borussia Dortmund', logo: dortmundLogo },
+    { name: 'Bayer Leverkusen', logo: leverkusenLogo },
+    { name: 'RB Leipzig', logo: leipzigLogo },
+    { name: 'Eintracht Frankfurt', logo: frankfurtLogo },
+    { name: 'VfB Stuttgart', logo: stuttgartLogo },
+    { name: 'SC Freiburg', logo: freiburgLogo },
+    { name: 'Union Berlin', logo: unionLogo },
+    { name: 'Werder Bremen', logo: bremenLogo },
+    { name: 'Borussia Mönchengladbach', logo: gladbachLogo },
+    { name: 'Wolfsburg', logo: wolfsburgLogo },
+    { name: 'Mainz 05', logo: mainzLogo },
+    { name: 'FC Augsburg', logo: augsburgLogo },
+    { name: 'TSG Hoffenheim', logo: hoffenheimLogo },
+    { name: 'Heidenheim', logo: heidenheimLogo },
+    { name: 'FC St. Pauli', logo: stpauliLogo },
+    { name: 'Hamburger SV', logo: hsvLogo },
+    { name: '1. FC Köln', logo: kolnLogo },
+  ];
 
   const selectedTeamObject = teams.find((team) => team.name === favoriteTeam);
 
@@ -59,6 +61,46 @@ function Signup() {
     setFavoriteTeam(team);
     setIsDropdownOpen(false);
   };
+
+  async function handleSignup() {
+    // Check all fields are filled
+    if (!firstName || !lastName || !email || !password || !confirmationPassword || !favoriteTeam) {
+      setError('Please fill in all fields')
+      return
+    }
+
+    // Check passwords match
+    if (password !== confirmationPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError('')
+
+      const response = await fetch("http://localhost:4000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, email, password, favoriteTeam })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log("Registered successfully!", data)
+        // e.g. redirect to login: navigate("/")
+      } else {
+        setError(data.error || "Signup failed")
+        console.log("Signup failed:", data.error)
+      }
+
+    } catch (err) {
+      setError("Could not connect to server")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -71,7 +113,6 @@ function Signup() {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -153,7 +194,6 @@ function Signup() {
                 </span>
               )}
             </div>
-
             <span style={styles.arrow}>{isDropdownOpen ? '▲' : '▼'}</span>
           </div>
 
@@ -164,9 +204,7 @@ function Signup() {
                   key={team.name}
                   style={{
                     ...styles.dropdownItem,
-                    ...(favoriteTeam === team.name
-                      ? styles.dropdownItemSelected
-                      : {}),
+                    ...(favoriteTeam === team.name ? styles.dropdownItemSelected : {}),
                   }}
                   onClick={() => handleTeamSelect(team.name)}
                 >
@@ -180,19 +218,22 @@ function Signup() {
           )}
         </div>
 
+        {/* Shows error message if something goes wrong */}
+        {error && <p style={styles.error}>{error}</p>}
+
         <button
-          style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}) }}
+          onClick={handleSignup}
+          disabled={loading}
+          style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}), ...(loading ? styles.buttonDisabled : {}) }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          Sign Up
+          {loading ? "Signing up..." : "Sign Up"}
         </button>
 
         <p style={styles.footer}>
           Already have an account?{' '}
-          <Link to="/" style={styles.link}>
-            Login
-          </Link>
+          <Link to="/" style={styles.link}>Login</Link>
         </p>
       </div>
     </div>
@@ -227,7 +268,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '100px',
     height: '100px',
     objectFit: 'contain',
-    
     marginBottom: '4px',
   },
   title: {
@@ -334,6 +374,16 @@ const styles: { [key: string]: React.CSSProperties } = {
   buttonHover: {
     backgroundColor: '#b81a13',
   },
+  buttonDisabled: {
+    backgroundColor: '#aaa',
+    cursor: 'not-allowed',
+  },
+  error: {
+    color: '#E32219',
+    fontSize: '13px',
+    margin: '0',
+    textAlign: 'center',
+  },
   footer: {
     fontSize: '13px',
     color: '#777',
@@ -347,9 +397,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     textDecoration: 'none',
   },
   topBar: {
-  width: '100%',
-  display: 'flex',
-  justifyContent: 'flex-end',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'flex-end',
   },
 };
 
