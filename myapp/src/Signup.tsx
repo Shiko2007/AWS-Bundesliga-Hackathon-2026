@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import bundesligaLogo from './assets/logos/Bundesliga.png';
 import bayernLogo from './assets/logos/Bayern.png';
 import dortmundLogo from './assets/logos/Dortmund.png';
@@ -21,6 +21,7 @@ import hsvLogo from './assets/logos/Hamburg.png';
 import kolnLogo from './assets/logos/Koln.png';
 
 function Signup() {
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -227,6 +228,10 @@ function Signup() {
           style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}), ...(loading ? styles.buttonDisabled : {}) }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
+          onClick={() => {
+  console.log('Sign up clicked');
+  navigate('/team-builder', { state: { favoriteTeam } });
+}}
         >
           {loading ? "Signing up..." : "Sign Up"}
         </button>
