@@ -90,6 +90,7 @@ function Signup() {
 
       if (data.success) {
         console.log("Registered successfully!", data)
+        navigate('/team-builder', { state: { favoriteTeam } });
         // e.g. redirect to login: navigate("/")
       } else {
         setError(data.error || "Signup failed")
@@ -223,18 +224,18 @@ function Signup() {
         {error && <p style={styles.error}>{error}</p>}
 
         <button
-          onClick={handleSignup}
-          disabled={loading}
-          style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}), ...(loading ? styles.buttonDisabled : {}) }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          onClick={() => {
-  console.log('Sign up clicked');
-  navigate('/team-builder', { state: { favoriteTeam } });
-}}
-        >
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
+  onClick={handleSignup}
+  disabled={loading}
+  style={{
+    ...styles.button,
+    ...(hovered ? styles.buttonHover : {}),
+    ...(loading ? styles.buttonDisabled : {}),
+  }}
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+>
+  {loading ? "Signing up..." : "Sign Up"}
+</button>
 
         <p style={styles.footer}>
           Already have an account?{' '}
