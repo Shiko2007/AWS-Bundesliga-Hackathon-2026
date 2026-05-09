@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import bundesligaLogo from './assets/logos/Bundesliga.png';
 import bayernLogo from './assets/logos/Bayern.png';
 import dortmundLogo from './assets/logos/Dortmund.png';
@@ -21,6 +21,7 @@ import hsvLogo from './assets/logos/Hamburg.png';
 import kolnLogo from './assets/logos/Koln.png';
 
 function Signup() {
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -89,6 +90,7 @@ function Signup() {
 
       if (data.success) {
         console.log("Registered successfully!", data)
+        navigate('/team-builder', { state: { favoriteTeam } });
         // e.g. redirect to login: navigate("/")
       } else {
         setError(data.error || "Signup failed")
@@ -222,14 +224,18 @@ function Signup() {
         {error && <p style={styles.error}>{error}</p>}
 
         <button
-          onClick={handleSignup}
-          disabled={loading}
-          style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}), ...(loading ? styles.buttonDisabled : {}) }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
+  onClick={handleSignup}
+  disabled={loading}
+  style={{
+    ...styles.button,
+    ...(hovered ? styles.buttonHover : {}),
+    ...(loading ? styles.buttonDisabled : {}),
+  }}
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+>
+  {loading ? "Signing up..." : "Sign Up"}
+</button>
 
         <p style={styles.footer}>
           Already have an account?{' '}
