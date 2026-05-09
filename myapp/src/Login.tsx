@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import bundesligaLogo from './assets/logos/Bundesliga.png';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hovered, setHovered] = useState(false);
-  const [error, setError] = useState('');        // stores any error message
-  const [loading, setLoading] = useState(false); // tracks if request is in progress
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate()
 
   async function handleLogin() {
-    // Basic check — don't send if fields are empty
     if (!email || !password) {
       setError('Please fill in all fields')
       return
@@ -20,18 +21,20 @@ function Login() {
       setLoading(true)
       setError('')
 
-const response = await fetch("http://localhost:4000/api/login", {
+      const response = await fetch("https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })  // sends email and password to server
+        body: JSON.stringify({ email, password })
       });
 
       const data = await response.json();
 
       if (data.success) {
         console.log("Logged in!", data)
-        // e.g. save token: localStorage.setItem("token", data.token)
-        // e.g. redirect:   navigate("/home")
+        localStorage.setItem("userId", data.userId)
+        localStorage.setItem("team", data.team)
+        localStorage.setItem("email", data.email)
+        navigate("/team-builder")
       } else {
         setError(data.error || "Login failed")
       }
@@ -71,17 +74,16 @@ const response = await fetch("http://localhost:4000/api/login", {
           style={styles.input}
         />
 
-        {/* Shows error message if something goes wrong */}
         {error && <p style={styles.error}>{error}</p>}
 
         <button
-          onClick={handleLogin}   // calls handleLogin when clicked
-          disabled={loading}      // disables button while request is in progress
+          onClick={handleLogin}
+          disabled={loading}
           style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}), ...(loading ? styles.buttonDisabled : {}) }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          {loading ? "Logging in..." : "Login"}  {/* changes text while loading */}
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p style={styles.footer}>
@@ -149,7 +151,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: '#b81a13',
   },
   buttonDisabled: {
-    backgroundColor: '#aaa',  // greys out while loading
+    backgroundColor: '#aaa',
     cursor: 'not-allowed',
   },
   error: {
