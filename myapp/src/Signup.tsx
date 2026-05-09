@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import bundesligaLogo from './assets/logos/Bundesliga.png';
 import bayernLogo from './assets/logos/Bayern.png';
 import dortmundLogo from './assets/logos/Dortmund.png';
@@ -20,6 +19,8 @@ import stpauliLogo from './assets/logos/St.Pauli.png';
 import hsvLogo from './assets/logos/Hamburg.png';
 import kolnLogo from './assets/logos/Koln.png';
 
+import { Link, useNavigate } from 'react-router-dom';
+
 function Signup() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -33,6 +34,7 @@ function Signup() {
   const [loading, setLoading] = useState(false);  // tracks if request is in progress
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+   const navigate = useNavigate()
 
   const teams = [
     { name: 'Bayern Munich', logo: bayernLogo },
@@ -62,7 +64,7 @@ function Signup() {
     setIsDropdownOpen(false);
   };
 
-  async function handleSignup() {
+ async function handleSignup() {
     // Check all fields are filled
     if (!firstName || !lastName || !email || !password || !confirmationPassword || !favoriteTeam) {
       setError('Please fill in all fields')
@@ -89,7 +91,7 @@ function Signup() {
 
       if (data.success) {
         console.log("Registered successfully!", data)
-        // e.g. redirect to login: navigate("/")
+        navigate("/players")   // ← only this line changed
       } else {
         setError(data.error || "Signup failed")
         console.log("Signup failed:", data.error)

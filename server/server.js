@@ -7,6 +7,7 @@ app.use(express.json())
 
 const users = []   // stores registered users
 
+//Sign Up
 app.post("/api/register", (req, res) => {
   const { firstName, lastName, email, password, favoriteTeam } = req.body
 
@@ -27,6 +28,7 @@ app.post("/api/register", (req, res) => {
   res.json({ success: true, message: "Account created!" })
 })
 
+//Log in
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body
 
@@ -37,6 +39,15 @@ app.post("/api/login", (req, res) => {
     console.log(`Failed login attempt for: ${email}`)
     res.json({ success: false, error: "Invalid email or password" })
   }
+})
+
+app.post("/api/players", (req, res) => {
+  const { players } = req.body
+
+  console.log("Team submitted:")
+  players.forEach(p => console.log(`  - #${p.number} ${p.firstName} ${p.lastName} (${p.position})`))
+
+  res.json({ success: true, players })
 })
 
 app.listen(4000, () => console.log("Server started on port 4000"))
