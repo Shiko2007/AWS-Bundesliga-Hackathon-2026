@@ -40,7 +40,7 @@ function Login() {
         // Store JWT token — use this in all future API calls
         localStorage.setItem("token", data.token);
 
-        navigate("/team-builder");
+        navigate("/dashboard");
       } else {
         setError(data.error || "Login failed");
       }

@@ -90,7 +90,7 @@ function Signup() {
 
       if (data.success) {
         console.log("Registered successfully!", data)
-        navigate('/team-builder', { state: { favoriteTeam } });
+        navigate('/dashboard', { state: { favoriteTeam } });
         // e.g. redirect to login: navigate("/")
       } else {
         setError(data.error || "Signup failed")
