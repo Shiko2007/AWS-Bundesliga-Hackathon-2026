@@ -9,17 +9,17 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   async function handleLogin() {
     if (!email || !password) {
-      setError('Please fill in all fields')
-      return
+      setError('Please fill in all fields');
+      return;
     }
 
     try {
-      setLoading(true)
-      setError('')
+      setLoading(true);
+      setError('');
 
       const response = await fetch("https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api/login", {
         method: "POST",
@@ -30,19 +30,25 @@ function Login() {
       const data = await response.json();
 
       if (data.success) {
-        console.log("Logged in!", data)
-        localStorage.setItem("userId", data.userId)
-        localStorage.setItem("team", data.team)
-        localStorage.setItem("email", data.email)
-        navigate("/team-builder")
+        console.log("Logged in!", data);
+
+        // Store user info
+        localStorage.setItem("userId", data.userId);
+        localStorage.setItem("team", data.team);
+        localStorage.setItem("email", data.email);
+
+        // Store JWT token — use this in all future API calls
+        localStorage.setItem("token", data.token);
+
+        navigate("/team-builder");
       } else {
-        setError(data.error || "Login failed")
+        setError(data.error || "Login failed");
       }
 
     } catch (err) {
-      setError("Could not connect to server")
+      setError("Could not connect to server");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -79,7 +85,11 @@ function Login() {
         <button
           onClick={handleLogin}
           disabled={loading}
-          style={{ ...styles.button, ...(hovered ? styles.buttonHover : {}), ...(loading ? styles.buttonDisabled : {}) }}
+          style={{
+            ...styles.button,
+            ...(hovered ? styles.buttonHover : {}),
+            ...(loading ? styles.buttonDisabled : {})
+          }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
@@ -176,6 +186,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     objectFit: 'contain',
     marginBottom: '4px',
   },
+  topBar: {},
 };
 
 export default Login;
