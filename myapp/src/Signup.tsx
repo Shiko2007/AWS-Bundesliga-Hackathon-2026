@@ -89,7 +89,36 @@ function Signup() {
       const data = await response.json();
 
       if (data.success) {
-        console.log("Registered successfully!", data)
+        console.log("Signed up!", data);
+
+      // ─────────────────────────────
+      // USER INFO
+      // ─────────────────────────────
+
+      localStorage.setItem("userId", data.userId);
+      localStorage.setItem("team", data.team);
+      localStorage.setItem("email", data.email);
+
+      // ─────────────────────────────
+      // JWT TOKEN
+      // ─────────────────────────────
+
+      localStorage.setItem("token", data.token);
+
+      // ─────────────────────────────
+      // SQUAD DATA
+      // ─────────────────────────────
+
+      localStorage.setItem(
+        "formation",
+        data.formation || ""
+      );
+
+      localStorage.setItem(
+        "players",
+        JSON.stringify(data.players || [])
+      );
+
         navigate('/dashboard', { state: { favoriteTeam } });
         // e.g. redirect to login: navigate("/")
       } else {

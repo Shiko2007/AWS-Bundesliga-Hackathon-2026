@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { teams, Player, Position } from './data/teams';
 
 type Formation =
@@ -39,19 +39,64 @@ function TeamBuilder({
 
   const players = selectedTeam.players;
 
-  const formations: Record<Formation, string[]> = {
-    '2-2-1': ['DEF1', 'DEF2', 'MID1', 'MID2', 'ATT1'],
-    '1-2-2': ['DEF1', 'MID1', 'MID2', 'ATT1', 'ATT2'],
-    '2-1-2': ['DEF1', 'DEF2', 'MID1', 'ATT1', 'ATT2'],
-    '1-3-1': ['DEF1', 'MID1', 'MID2', 'MID3', 'ATT1'],
-    '3-1-1': ['DEF1', 'DEF2', 'DEF3', 'MID1', 'ATT1'],
+  // ======================================
+  // FORMATIONS
+  // ======================================
 
-    'GK-2-1-1': ['GK1', 'DEF1', 'DEF2', 'MID1', 'ATT1'],
-    'GK-1-2-1': ['GK1', 'DEF1', 'MID1', 'MID2', 'ATT1'],
-    'GK-1-1-2': ['GK1', 'DEF1', 'MID1', 'ATT1', 'ATT2'],
-    'GK-3-1': ['GK1', 'DEF1', 'DEF2', 'DEF3', 'ATT1'],
-    'GK-2-2': ['GK1', 'DEF1', 'DEF2', 'ATT1', 'ATT2'],
-  };
+  const formations: Record<Formation, string[]> = useMemo(
+    () => ({
+      '2-2-1': ['DEF1', 'DEF2', 'MID1', 'MID2', 'ATT1'],
+      '1-2-2': ['DEF1', 'MID1', 'MID2', 'ATT1', 'ATT2'],
+      '2-1-2': ['DEF1', 'DEF2', 'MID1', 'ATT1', 'ATT2'],
+      '1-3-1': ['DEF1', 'MID1', 'MID2', 'MID3', 'ATT1'],
+      '3-1-1': ['DEF1', 'DEF2', 'DEF3', 'MID1', 'ATT1'],
+
+      'GK-2-1-1': ['GK1', 'DEF1', 'DEF2', 'MID1', 'ATT1'],
+      'GK-1-2-1': ['GK1', 'DEF1', 'MID1', 'MID2', 'ATT1'],
+      'GK-1-1-2': ['GK1', 'DEF1', 'MID1', 'ATT1', 'ATT2'],
+      'GK-3-1': ['GK1', 'DEF1', 'DEF2', 'DEF3', 'ATT1'],
+      'GK-2-2': ['GK1', 'DEF1', 'DEF2', 'ATT1', 'ATT2'],
+    }),
+    []
+  );
+
+  // ======================================
+  // LOAD SAVED TEAM ONCE
+  // ======================================
+
+  useEffect(() => {
+    const savedFormation = localStorage.getItem('formation');
+    const savedPlayers = localStorage.getItem('players');
+
+    if (!savedFormation || !savedPlayers) return;
+
+    try {
+      const parsedPlayers: number[] = JSON.parse(savedPlayers);
+
+      if (!formations[savedFormation as Formation]) return;
+
+      setFormation(savedFormation);
+
+      const slots = formations[savedFormation as Formation];
+
+      const loadedPlayers: { [slotId: string]: Player | null } = {};
+
+      parsedPlayers.forEach((playerId, index) => {
+        const foundPlayer = players.find(
+          (player) => player.id === playerId
+        );
+
+        if (foundPlayer && slots[index]) {
+          loadedPlayers[slots[index]] = foundPlayer;
+        }
+      });
+
+      setSelectedPlayers(loadedPlayers);
+
+    } catch (error) {
+      console.error('Failed to load saved squad:', error);
+    }
+  }, [formations, players, setFormation, setSelectedPlayers]);
 
   const slotPositions: Record<Formation, Record<string, React.CSSProperties>> = {
     '2-2-1': {
@@ -193,15 +238,68 @@ function TeamBuilder({
     setSelectedPlayers(keptPlayers);
   };
 
-  const saveTeam = () => {
-    const selectedCount = Object.values(selectedPlayers).filter(Boolean).length;
+  const saveTeam = async () => {
+    const selectedCount =
+      Object.values(selectedPlayers).filter(Boolean).length;
 
     if (selectedCount < 5) {
       alert('Please choose 5 players first');
       return;
     }
 
-    alert('Team saved!');
+    try {
+      const API_URL =
+        'https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api/squad';
+
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        alert('You are not logged in');
+        return;
+      }
+
+      const playerIds = Object.values(selectedPlayers)
+        .filter(Boolean)
+        .map((player) => player!.id);
+
+      const requestBody = {
+        formation,
+        players: playerIds,
+      };
+
+      console.log('Sending squad:', requestBody);
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+
+      console.log('API response:', data);
+
+      if (!response.ok || !data.success) {
+        alert(data.error || 'Failed to save squad');
+        return;
+      }
+
+      // SAVE LOCALLY TOO
+      localStorage.setItem('formation', formation);
+      localStorage.setItem('players', JSON.stringify(playerIds));
+
+      alert('Team saved successfully!');
+
+    } catch (error) {
+      console.error('Save squad error:', error);
+
+      alert('Something went wrong while saving the squad');
+    }
   };
 
   const renderPlayerCard = (player: Player) => (

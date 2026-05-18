@@ -29,22 +29,45 @@ function Login() {
 
       const data = await response.json();
 
-      if (data.success) {
-        console.log("Logged in!", data);
+if (data.success) {
+  console.log("Logged in!", data);
 
-        // Store user info
-        localStorage.setItem("userId", data.userId);
-        localStorage.setItem("team", data.team);
-        localStorage.setItem("email", data.email);
+  // ─────────────────────────────
+  // USER INFO
+  // ─────────────────────────────
 
-        // Store JWT token — use this in all future API calls
-        localStorage.setItem("token", data.token);
+  localStorage.setItem("userId", data.userId);
+  localStorage.setItem("team", data.team);
+  localStorage.setItem("email", data.email);
 
-        navigate("/dashboard");
-      } else {
-        setError(data.error || "Login failed");
-      }
+  // ─────────────────────────────
+  // JWT TOKEN
+  // ─────────────────────────────
 
+  localStorage.setItem("token", data.token);
+
+  // ─────────────────────────────
+  // SQUAD DATA
+  // ─────────────────────────────
+
+  localStorage.setItem(
+    "formation",
+    data.formation || ""
+  );
+
+  localStorage.setItem(
+    "players",
+    JSON.stringify(data.players || [])
+  );
+
+  console.log("Saved formation:", data.formation);
+  console.log("Saved players:", data.players);
+
+  navigate("/dashboard");
+
+} else {
+  setError(data.error || "Login failed");
+}
     } catch (err) {
       setError("Could not connect to server");
     } finally {
