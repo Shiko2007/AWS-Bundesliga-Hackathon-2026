@@ -18,6 +18,30 @@ import hsvLogo from '../assets/logos/Hamburg.png';
 import kolnLogo from '../assets/logos/Koln.png';
 
 import neuerPhoto from '../assets/players/bayern/Neuer.png';
+import kanePhoto from '../assets/players/bayern/Kane.png';
+import ulreichPhoto from '../assets/players/bayern/Ulreich.png';
+import urbigPhoto from '../assets/players/bayern/Urbig.png';
+import klanacPhoto from '../assets/players/bayern/Klanac.png';
+import upamecanoPhoto from '../assets/players/bayern/Upamecano.png';
+import tahPhoto from '../assets/players/bayern/Tah.png';
+import kimPhoto from '../assets/players/bayern/Kim.png';
+import itoPhoto from '../assets/players/bayern/Ito.png';
+import daviesPhoto from '../assets/players/bayern/Davies.png';
+import stanisicPhoto from '../assets/players/bayern/Stanisic.png';
+import laimerPhoto from '../assets/players/bayern/Laimer.png';
+import pavlovicPhoto from '../assets/players/bayern/Pavlovic.png';
+import kimmichPhoto from '../assets/players/bayern/Kimmich.png';
+import daiberPhoto from '../assets/players/bayern/Daiber.png';
+import bischofPhoto from '../assets/players/bayern/Bischof.png';
+import goretzkaPhoto from '../assets/players/bayern/Goretzka.png';
+import ndiayePhoto from '../assets/players/bayern/Ndiaye.png';
+import musialaPhoto from '../assets/players/bayern/Musiala.png';
+import karlPhoto from '../assets/players/bayern/Karl.png';
+import guerreiroPhoto from '../assets/players/bayern/Guerreiro.png';
+import diazPhoto from '../assets/players/bayern/Diaz.png';
+import olisePhoto from '../assets/players/bayern/Olise.png';
+import gnabryPhoto from '../assets/players/bayern/Gnabry.png';
+import jacksonPhoto from '../assets/players/bayern/Jackson.png';
 
 export type Position = 'GK' | 'DEF' | 'MID' | 'ATT';
 
@@ -45,35 +69,35 @@ export const teams: Team[] = [
     secondaryColor: '#ffffff',
 
     players: [
-    { id: 1, name: 'Jonas Urbig', position: 'GK' },
-    { id: 2, name: 'Manuel Neuer', position: 'GK', image: neuerPhoto },
-    { id: 3, name: 'Sven Ulreich', position: 'GK' },
-    { id: 4, name: 'Leon Klanac', position: 'GK' },
+      { id: 1, name: 'Jonas Urbig', position: 'GK', image: urbigPhoto },
+      { id: 2, name: 'Manuel Neuer', position: 'GK', image: neuerPhoto },
+      { id: 3, name: 'Sven Ulreich', position: 'GK', image: ulreichPhoto },
+      { id: 4, name: 'Leon Klanac', position: 'GK', image: klanacPhoto },
 
-    { id: 5, name: 'Dayot Upamecano', position: 'DEF' },
-    { id: 6, name: 'Jonathan Tah', position: 'DEF' },
-    { id: 7, name: 'Kim Min-jae', position: 'DEF' },
-    { id: 8, name: 'Hiroki Ito', position: 'DEF' },
-    { id: 9, name: 'Alphonso Davies', position: 'DEF' },
-    { id: 10, name: 'Josip Stanisic', position: 'DEF' },
-    { id: 11, name: 'Konrad Laimer', position: 'DEF' },
+      { id: 5, name: 'Dayot Upamecano', position: 'DEF', image: upamecanoPhoto },
+      { id: 6, name: 'Jonathan Tah', position: 'DEF', image: tahPhoto },
+      { id: 7, name: 'Kim Min-jae', position: 'DEF', image: kimPhoto },
+      { id: 8, name: 'Hiroki Ito', position: 'DEF', image: itoPhoto },
+      { id: 9, name: 'Alphonso Davies', position: 'DEF', image: daviesPhoto },
+      { id: 10, name: 'Josip Stanisic', position: 'DEF', image: stanisicPhoto },
+      { id: 11, name: 'Konrad Laimer', position: 'DEF', image: laimerPhoto },
 
-    { id: 12, name: 'Aleksandar Pavlovic', position: 'MID' },
-    { id: 13, name: 'Joshua Kimmich', position: 'MID' },
-    { id: 14, name: 'David Santos Daiber', position: 'MID' },
-    { id: 15, name: 'Tom Bischof', position: 'MID' },
-    { id: 16, name: 'Leon Goretzka', position: 'MID' },
-    { id: 17, name: 'Bara Sapoko Ndiaye', position: 'MID' },
-    { id: 18, name: 'Jamal Musiala', position: 'MID' },
-    { id: 19, name: 'Lennart Karl', position: 'MID' },
-    { id: 20, name: 'Raphaël Guerreiro', position: 'MID' },
+      { id: 12, name: 'Aleksandar Pavlovic', position: 'MID', image: pavlovicPhoto },
+      { id: 13, name: 'Joshua Kimmich', position: 'MID', image: kimmichPhoto },
+      { id: 14, name: 'David Santos Daiber', position: 'MID', image: daiberPhoto },
+      { id: 15, name: 'Tom Bischof', position: 'MID', image: bischofPhoto },
+      { id: 16, name: 'Leon Goretzka', position: 'MID', image: goretzkaPhoto },
+      { id: 17, name: 'Bara Sapoko Ndiaye', position: 'MID', image: ndiayePhoto },
+      { id: 18, name: 'Jamal Musiala', position: 'MID', image: musialaPhoto },
+      { id: 19, name: 'Lennart Karl', position: 'MID', image: karlPhoto },
+      { id: 20, name: 'Raphaël Guerreiro', position: 'MID', image: guerreiroPhoto },
 
-    { id: 21, name: 'Luis Díaz', position: 'ATT' },
-    { id: 22, name: 'Michael Olise', position: 'ATT' },
-    { id: 23, name: 'Serge Gnabry', position: 'ATT' },
-    { id: 24, name: 'Harry Kane', position: 'ATT' },
-    { id: 25, name: 'Nicolas Jackson', position: 'ATT' },
-  ],
+      { id: 21, name: 'Luis Díaz', position: 'ATT', image: diazPhoto },
+      { id: 22, name: 'Michael Olise', position: 'ATT', image: olisePhoto },
+      { id: 23, name: 'Serge Gnabry', position: 'ATT', image: gnabryPhoto },
+      { id: 24, name: 'Harry Kane', position: 'ATT', image: kanePhoto },
+      { id: 25, name: 'Nicolas Jackson', position: 'ATT', image: jacksonPhoto },
+    ],
   },
 
   {
