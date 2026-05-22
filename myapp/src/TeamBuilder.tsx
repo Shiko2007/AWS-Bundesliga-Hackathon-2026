@@ -56,7 +56,6 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
     'GK-2-2':   'GK+2-2',
   };
 
-  // Helper — must be defined before useEffect that uses it
   const getSlotPosition = (slot: string): Position => {
     if (slot.startsWith('GK'))  return 'GK';
     if (slot.startsWith('DEF')) return 'DEF';
@@ -64,31 +63,35 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
     return 'ATT';
   };
 
-  // ── Load saved squad ──────────────────────────────────────────────────────
+  // ── Load saved squad ───────────────────────────────────────────────────────
   useEffect(() => {
-    const savedFormation  = localStorage.getItem('formation');
+    const savedFormation = localStorage.getItem('formation');
     const savedSlotPlayers = localStorage.getItem('slotPlayers');
-    const savedLegacy      = localStorage.getItem('players');
+    const savedLegacy = localStorage.getItem('players');
 
     if (!savedFormation) return;
     if (!formations[savedFormation as Formation]) return;
 
     try {
       setFormation(savedFormation);
+
       const loadedPlayers: { [slotId: string]: Player | null } = {};
 
       if (savedSlotPlayers) {
-        const slotMap: { [slot: string]: number } = JSON.parse(savedSlotPlayers);
+        const slotMap: { [slot: string]: string } = JSON.parse(savedSlotPlayers);
+
         Object.entries(slotMap).forEach(([slot, playerId]) => {
-          const found = players.find((p) => p.id === playerId);
+          const found = players.find((p) => String(p.id) === String(playerId));
           if (found) loadedPlayers[slot] = found;
         });
       } else if (savedLegacy) {
-        const ids: number[] = JSON.parse(savedLegacy);
+        const ids: string[] = JSON.parse(savedLegacy);
         const slots = formations[savedFormation as Formation];
+
         ids.forEach((playerId) => {
-          const found = players.find((p) => p.id === playerId);
+          const found = players.find((p) => String(p.id) === String(playerId));
           if (!found) return;
+
           const freeSlot = slots.find(
             (s) => getSlotPosition(s) === found.position && !loadedPlayers[s]
           );
@@ -193,11 +196,30 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
   const availablePlayers  = players.filter((p) => !selectedPlayerIds.includes(p.id));
   const getPlayersByPosition = (pos: Position) => availablePlayers.filter((p) => p.position === pos);
 
-  const handleDrop = (e: React.DragEvent, slot: string) => {
+  const handleDrop = (e: React.DragEvent, targetSlot: string) => {
     const player = JSON.parse(e.dataTransfer.getData('player')) as Player;
-    const needed  = getSlotPosition(slot);
-    if (player.position !== needed) { alert(`You need a ${needed} player here`); return; }
-    setSelectedPlayers((prev) => ({ ...prev, [slot]: player }));
+    const sourceSlot = e.dataTransfer.getData('sourceSlot'); // empty string if dragged from bench
+    const needed = getSlotPosition(targetSlot);
+
+    if (player.position !== needed) {
+      alert(`You need a ${needed} player here`);
+      return;
+    }
+
+    setSelectedPlayers((prev) => {
+      const next = { ...prev };
+      const displaced = prev[targetSlot] ?? null;
+
+      // Place dragged player into the target slot
+      next[targetSlot] = player;
+
+      // If dragged from another pitch slot, put the displaced player (or null) back there
+      if (sourceSlot) {
+        next[sourceSlot] = displaced;
+      }
+
+      return next;
+    });
   };
 
   const handleRemovePlayer = (slot: string) => {
@@ -207,7 +229,7 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
   const handleFormationChange = (newFormation: Formation) => {
     const newSlots = formations[newFormation];
     const keptPlayers: { [slotId: string]: Player | null } = {};
-    const usedIds: number[] = [];
+    const usedIds: string[] = [];
     Object.values(selectedPlayers).forEach((player) => {
       if (!player || usedIds.includes(player.id)) return;
       const freeSlot = newSlots.find((s) => getSlotPosition(s) === player.position && !keptPlayers[s]);
@@ -226,7 +248,10 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
       if (!token) { alert('You are not logged in'); return; }
 
       const slots = formations[currentFormation];
-      const playerIds = slots.map((slot) => selectedPlayers[slot]?.id).filter((id): id is number => id != null);
+      const playerIds = slots
+        .map((slot) => selectedPlayers[slot]?.id)
+        .filter((id): id is string => id != null);
+
       const requestBody = { formation, players: playerIds };
       console.log('Sending squad:', requestBody);
 
@@ -239,7 +264,7 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
       console.log('API response:', data);
       if (!response.ok || !data.success) { alert(data.error || 'Failed to save squad'); return; }
 
-      const slotMap: { [slot: string]: number } = {};
+      const slotMap: { [slot: string]: string } = {};
       Object.entries(selectedPlayers).forEach(([slot, player]) => {
         if (player) slotMap[slot] = player.id;
       });
@@ -265,7 +290,10 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
     <div
       key={player.id}
       draggable
-      onDragStart={(e) => e.dataTransfer.setData('player', JSON.stringify(player))}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('player', JSON.stringify(player));
+        // No sourceSlot — bench cards don't set one
+      }}
       style={styles.playerCard}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ffb4aa'; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; }}
@@ -289,8 +317,16 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
     </div>
   );
 
-  const renderSelectedPlayer = (player: Player) => (
-    <div style={styles.selectedPlayerContainer}>
+  // Now accepts the slot so we can track the drag source
+  const renderSelectedPlayer = (player: Player, slot: string) => (
+    <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('player', JSON.stringify(player));
+        e.dataTransfer.setData('sourceSlot', slot);
+      }}
+      style={styles.selectedPlayerContainer}
+    >
       {player.image
         ? <img src={player.image} alt={player.name} style={styles.selectedPlayerImage} />
         : <div style={styles.selectedPlayerPlaceholder} />
@@ -375,7 +411,7 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
             onDrop={(e) => handleDrop(e, slot)}
             onDoubleClick={() => handleRemovePlayer(slot)}
           >
-            {selectedPlayers[slot] ? renderSelectedPlayer(selectedPlayers[slot]!) : renderEmptySlot(slot)}
+            {selectedPlayers[slot] ? renderSelectedPlayer(selectedPlayers[slot]!, slot) : renderEmptySlot(slot)}
           </div>
         ))}
       </div>
@@ -415,7 +451,6 @@ function TeamBuilder({ favoriteTeam, selectedPlayers, setSelectedPlayers, format
 }
 
 const styles: { [key: string]: React.CSSProperties } = {
-
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
@@ -428,7 +463,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflow: 'hidden',
     fontFamily: "'Lexend', sans-serif",
   },
-
   grain: {
     position: 'absolute',
     top: 0, left: 0,
@@ -438,8 +472,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 9999,
     backgroundRepeat: 'repeat',
   },
-
-  // ── Header ────────────────────────────────────
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -449,19 +481,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexShrink: 0,
     marginTop: '18px',
   },
-
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
   },
-
   teamLogo: {
     width: '36px',
     height: '36px',
     objectFit: 'contain',
   },
-
   headerEyebrow: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '9px',
@@ -471,7 +500,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     textTransform: 'uppercase' as const,
   },
-
   headerTitle: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '20px',
@@ -481,13 +509,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 400,
     lineHeight: 1,
   },
-
-  // ── Formation custom dropdown ──────────────────
   formationWrapper: {
     position: 'relative' as const,
     flexShrink: 0,
   },
-
   formationDropdownHeader: {
     display: 'flex',
     alignItems: 'center',
@@ -500,20 +525,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     minWidth: '90px',
     justifyContent: 'space-between',
   },
-
   formationDropdownLabel: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '16px',
     letterSpacing: '0.05em',
     color: '#ffb4aa',
   },
-
   formationArrow: {
     fontSize: '9px',
     color: '#ffb4aa',
     flexShrink: 0,
   },
-
   formationDropdownList: {
     position: 'absolute' as const,
     top: '100%',
@@ -525,7 +547,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 100,
     boxSizing: 'border-box' as const,
   },
-
   formationDropdownItem: {
     padding: '8px 10px',
     cursor: 'pointer',
@@ -535,13 +556,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#dcc0bd',
     borderBottom: '1px solid #2a2c2c',
   },
-
   formationDropdownItemSelected: {
     backgroundColor: '#2a1c1c',
     color: '#ffb4aa',
   },
-
-  // ── Pitch ─────────────────────────────────────
   pitch: {
     position: 'relative',
     flex: '1 1 0',
@@ -551,14 +569,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     background: 'linear-gradient(90deg, #168a3a 0%, #168a3a 50%, #0f7a32 50%, #0f7a32 100%)',
     border: '3px solid white',
   },
-
   halfwayLine: {
     position: 'absolute',
     left: 0, top: '50%',
     width: '100%', height: '2px',
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
-
   centerCircle: {
     position: 'absolute',
     left: '50%', top: '50%',
@@ -567,7 +583,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '50%',
     transform: 'translate(-50%, -50%)',
   },
-
   slot: {
     position: 'absolute',
     width: '72px',
@@ -578,7 +593,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     transform: 'translate(-50%, -50%)',
     cursor: 'pointer',
   },
-
   emptySlot: {
     width: '52px',
     height: '52px',
@@ -590,35 +604,31 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: 'rgba(0,0,0,0.35)',
     backdropFilter: 'blur(4px)',
   },
-
   emptySlotLabel: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '13px',
     letterSpacing: '0.05em',
   },
-
   selectedPlayerContainer: {
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
     gap: '2px',
     width: '100%',
+    cursor: 'grab',
   },
-
   selectedPlayerImage: {
     width: '58px',
     height: '58px',
     objectFit: 'contain' as const,
     filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))',
   },
-
   selectedPlayerPlaceholder: {
     width: '52px',
     height: '52px',
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: '4px',
   },
-
   selectedPlayerName: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '9px',
@@ -634,15 +644,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     textOverflow: 'ellipsis',
     backdropFilter: 'blur(4px)',
   },
-
-  // ── Action row ────────────────────────────────
   actionRow: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexShrink: 0,
   },
-
   helperText: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '9px',
@@ -652,7 +659,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     textTransform: 'uppercase' as const,
     margin: 0,
   },
-
   saveButton: {
     backgroundColor: '#fff',
     color: '#1a1c1c',
@@ -665,8 +671,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxShadow: '3px 3px 0 0 rgba(0,0,0,1)',
     transition: 'background-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s',
   },
-
-  // ── Bench ─────────────────────────────────────
   bench: {
     display: 'flex',
     flexDirection: 'row' as const,
@@ -678,7 +682,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     scrollbarWidth: 'none' as const,
     msOverflowStyle: 'none' as const,
   },
-
   positionDivider: {
     minWidth: '28px',
     height: '90px',
@@ -689,7 +692,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexShrink: 0,
     paddingLeft: '6px',
   },
-
   positionDividerText: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '13px',
@@ -697,7 +699,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     writingMode: 'vertical-rl' as const,
     textOrientation: 'mixed' as const,
   },
-
   playerCard: {
     minWidth: '62px',
     height: '90px',
@@ -711,7 +712,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: 'border-color 0.15s',
     position: 'relative' as const,
   },
-
   playerImage: {
     width: '62px',
     height: '68px',
@@ -721,7 +721,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexShrink: 0,
     backgroundColor: '#0e0e0e',
   },
-
   playerImagePlaceholder: {
     width: '100%',
     height: '68px',
@@ -731,7 +730,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     flexShrink: 0,
   },
-
   playerCardFooter: {
     flex: 1,
     display: 'flex',
@@ -743,7 +741,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '1px',
     borderTop: '1px solid #222',
   },
-
   playerCardName: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '7px',
@@ -757,7 +754,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
   },
-
   playerCardPos: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '10px',

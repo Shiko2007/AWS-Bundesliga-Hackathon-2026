@@ -1,8 +1,11 @@
+// MatchTab.tsx
 import React, { useState } from 'react';
 import { ActionCard } from './data/cards';
 import { Player, Position } from './data/teams';
 import grainTexture from './assets/images/grain.png';
 import matchBg from './assets/images/match.jpg';
+
+const API_BASE = 'https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api';
 
 type Formation =
   | '2-2-1'
@@ -44,7 +47,11 @@ function MatchTab({
   setCardsSaved,
 }: Props) {
 
-  const [playedCards, setPlayedCards] = useState<PlayedCard[]>([]);
+  const [playedCards, setPlayedCards]     = useState<PlayedCard[]>([]);
+  const [matchPoints, setMatchPoints]     = useState(0);
+  const [enteringMatch, setEnteringMatch] = useState(false);
+  const [matchId, setMatchId]             = useState<string | null>(null);
+  const [saving, setSaving]               = useState(false);
 
   const formations: Record<Formation, string[]> = {
     '2-2-1':    ['DEF1', 'DEF2', 'MID1', 'MID2', 'ATT1'],
@@ -167,17 +174,125 @@ function MatchTab({
     setPlayedCards([]);
   };
 
+  // ── Enter match ─────────────────────────────────────────────────────────────
+  const handleEnterMatch = async () => {
+    if (enteringMatch) return;
+    setEnteringMatch(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You are not logged in.');
+        return;
+      }
+
+      const res  = await fetch(`${API_BASE}/enter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (data.reason === 'lineups_not_announced') {
+          alert('Lineups haven\'t been announced yet — check back closer to kick-off.');
+        } else {
+          alert(data.error || 'Could not enter match.');
+        }
+        return;
+      }
+
+      setMatchId(data.matchId);
+      setCardsSaved(true);
+    } catch (err) {
+      console.error('enterMatch error:', err);
+      alert('Network error — please try again.');
+    } finally {
+      setEnteringMatch(false);
+    }
+  };
+
+  // ── Save (play) all assigned cards ──────────────────────────────────────────
+  const handleSave = async () => {
+    if (saving) return;
+
+    if (playedCards.length === 0) {
+      alert('Assign at least 1 card to a player before saving.');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('You are not logged in.');
+      return;
+    }
+
+    // Build the cards payload: one entry per played card
+    const cardsPayload = playedCards.map(({ card, slot }) => {
+      const player = selectedPlayers[slot];
+      return {
+        card_name: card.id,
+        duration:  card.duration,          // seconds — must exist on ActionCard
+        player_id: slot === 'TEAM'
+          ? 'TEAM'
+          : (player?.id ?? player?.name ?? slot), // fall back gracefully
+      };
+    });
+
+    setSaving(true);
+
+    try {
+      const res  = await fetch(`${API_BASE}/activate_card`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ cards: cardsPayload }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'Failed to save cards.');
+        return;
+      }
+
+      // Report any per-card failures
+      const failed = (data.results as Array<{ card_name: string; success: boolean; error?: string }>)
+        .filter((r) => !r.success);
+
+      if (failed.length > 0) {
+        const msgs = failed.map((f) => `• ${f.card_name}: ${f.error}`).join('\n');
+        alert(`Some cards failed to activate:\n${msgs}`);
+      } else {
+        alert('All cards played successfully!');
+      }
+
+      // Return to card-selection screen regardless
+      editCards();
+    } catch (err) {
+      console.error('handleSave error:', err);
+      alert('Network error — please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleCardDropOnPlayer = (e: React.DragEvent, slot: string) => {
-    const card = JSON.parse(e.dataTransfer.getData('card')) as ActionCard;
+    const card   = JSON.parse(e.dataTransfer.getData('card')) as ActionCard;
     const player = selectedPlayers[slot];
-    if (!player) { alert('Drop the card on a selected player'); return; }
+    if (!player)                  { alert('Drop the card on a selected player'); return; }
     if (card.appliesTo === 'TEAM') { alert('This card is for the whole team, not one player'); return; }
     const alreadyPlayed = playedCards.some((played) => played.card.id === card.id);
-    if (alreadyPlayed) { alert('This card was already played'); return; }
+    if (alreadyPlayed)            { alert('This card was already played'); return; }
     setPlayedCards([...playedCards, { card, playerName: player.name, slot }]);
   };
 
-  const removePlayedCard = (cardId: number) => {
+  const removePlayedCard = (cardId: string) => {
     setPlayedCards(playedCards.filter((played) => played.card.id !== cardId));
   };
 
@@ -187,8 +302,8 @@ function MatchTab({
     setPlayedCards([...playedCards, { card, playerName: 'Whole Team', slot: 'TEAM' }]);
   };
 
-  const isCardPlayed = (cardId: number) => playedCards.some((played) => played.card.id === cardId);
-  const getCardPlayedOnSlot = (slot: string) => playedCards.filter((played) => played.slot === slot);
+  const isCardPlayed        = (cardId: string) => playedCards.some((played) => played.card.id === cardId);
+  const getCardPlayedOnSlot = (slot: string)   => playedCards.filter((played) => played.slot === slot);
 
   const positionAccentColor = (pos: Position) => {
     if (pos === 'GK')  return '#f5a623';
@@ -197,12 +312,17 @@ function MatchTab({
     return '#d7040f';
   };
 
-  const cardTypeColor = (card: ActionCard) => card.appliesTo === 'TEAM' ? '#7ed321' : '#ffb4aa';
+  const cardTypeColor = (card: ActionCard) =>
+    card.appliesTo === 'TEAM' ? '#7ed321' : '#ffb4aa';
 
   const renderPlayer = (slot: string, player: Player) => {
     const cardsOnThisPlayer = getCardPlayedOnSlot(slot);
     return (
-      <div style={styles.selectedPlayerContainer}>
+      <div
+        style={styles.selectedPlayerContainer}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => handleCardDropOnPlayer(e, slot)}
+      >
         {player.image && (
           <img src={player.image} alt={player.name} style={styles.selectedPlayerImage} />
         )}
@@ -214,7 +334,7 @@ function MatchTab({
     );
   };
 
-  // ── Card selection screen ──────────────────────────────────────────────────
+  // ── Card selection screen ───────────────────────────────────────────────────
   if (!cardsSaved) {
     return (
       <div style={styles.wrapper}>
@@ -279,13 +399,19 @@ function MatchTab({
             </button>
 
             <button
-              style={styles.enterMatchButton}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#d7040f'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.boxShadow = 'none'; }}
+              style={{
+                ...styles.enterMatchButton,
+                opacity: enteringMatch ? 0.6 : 1,
+                cursor:  enteringMatch ? 'wait' : 'pointer',
+              }}
+              onClick={handleEnterMatch}
+              disabled={enteringMatch}
+              onMouseEnter={(e) => { if (!enteringMatch) { e.currentTarget.style.backgroundColor = '#d7040f'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.boxShadow = 'none'; } }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#ffb4aa'; e.currentTarget.style.boxShadow = '4px 4px 0 0 rgba(215,4,15,0.4)'; }}
               onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)'; e.currentTarget.style.boxShadow = 'none'; }}
               onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              ENTER MATCH →
+              {enteringMatch ? 'CHECKING...' : 'ENTER MATCH →'}
             </button>
           </div>
         </div>
@@ -293,12 +419,9 @@ function MatchTab({
     );
   }
 
-  // ── Match preview screen ───────────────────────────────────────────────────
+  // ── Match preview screen ────────────────────────────────────────────────────
   return (
-    <div style={{
-      ...styles.wrapper,
-      backgroundImage: `url(${matchBg})`,
-    }}>
+    <div style={{ ...styles.wrapper, backgroundImage: `url(${matchBg})` }}>
       <div style={{ ...styles.grain, backgroundImage: `url(${grainTexture})` }} />
 
       {/* Header */}
@@ -307,17 +430,32 @@ function MatchTab({
           <p style={styles.eyebrow}>MATCH DAY</p>
           <h2 style={styles.headerTitle}>MATCH PREVIEW</h2>
         </div>
+
+        {/* SAVE button now calls handleSave */}
         <button
-          style={styles.editButton}
-          onClick={editCards}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d7040f'; e.currentTarget.style.color = '#ffb4aa'; }}
+          style={{
+            ...styles.editButton,
+            opacity: saving ? 0.6 : 1,
+            cursor:  saving ? 'wait' : 'pointer',
+          }}
+          onClick={handleSave}
+          disabled={saving}
+          onMouseEnter={(e) => { if (!saving) { e.currentTarget.style.borderColor = '#d7040f'; e.currentTarget.style.color = '#ffb4aa'; } }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#554240'; e.currentTarget.style.color = '#dcc0bd'; }}
         >
-          SAVE
+          {saving ? 'SAVING...' : 'SAVE'}
         </button>
       </header>
 
-      <p style={styles.helperText}>TAP TEAM CARDS TO PLAY</p>
+      {/* Points counter */}
+      <div style={styles.pointsPolaroid}>
+        <div style={styles.pointsPolaroidInner}>
+          <span style={styles.pointsPolaroidLabel}>MATCH POINTS</span>
+          <span style={styles.pointsPolaroidValue}>{matchPoints.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <p style={styles.helperText}>TAP TEAM CARDS · DRAG PLAYER CARDS ONTO PLAYERS</p>
 
       {/* Pitch */}
       <div style={styles.pitch}>
@@ -328,8 +466,6 @@ function MatchTab({
           <div
             key={slot}
             style={{ ...styles.slot, ...slotPositions[currentFormation][slot] }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => handleCardDropOnPlayer(e, slot)}
           >
             {selectedPlayers[slot]
               ? renderPlayer(slot, selectedPlayers[slot]!)
@@ -349,7 +485,7 @@ function MatchTab({
       <p style={styles.sectionLabel}>YOUR CARDS</p>
       <div style={styles.cardBench}>
         {selectedCards.map((card) => {
-          const played = isCardPlayed(card.id);
+          const played      = isCardPlayed(card.id);
           const playedEntry = playedCards.find((p) => p.card.id === card.id);
           return (
             <div
@@ -360,7 +496,7 @@ function MatchTab({
               style={{
                 ...styles.benchCard,
                 ...(played ? styles.benchCardPlayed : {}),
-                cursor: card.appliesTo === 'TEAM' ? 'pointer' : played ? 'not-allowed' : 'grab',
+                cursor:      card.appliesTo === 'TEAM' ? 'pointer' : played ? 'not-allowed' : 'grab',
                 borderColor: played ? '#2a2a2a' : cardTypeColor(card),
               }}
               onMouseEnter={(e) => {
@@ -397,7 +533,6 @@ function MatchTab({
 }
 
 const styles: { [key: string]: React.CSSProperties } = {
-
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
@@ -410,7 +545,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflow: 'hidden',
     fontFamily: "'Lexend', sans-serif",
   },
-
   grain: {
     position: 'absolute',
     top: 0, left: 0,
@@ -420,8 +554,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 9999,
     backgroundRepeat: 'repeat',
   },
-
-  // ── Card selection ────────────────────────────
   selectionInner: {
     position: 'relative',
     zIndex: 1,
@@ -431,17 +563,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     height: '100%',
     overflow: 'hidden' as const,
   },
-
   eyebrow: {
     fontFamily: "'Lexend', sans-serif",
-    fontSize: 'px',
+    fontSize: '9px',
     fontWeight: 700,
     letterSpacing: '0.12em',
     color: '#ffb4aa',
     margin: '14px 0 0',
     textTransform: 'uppercase' as const,
   },
-
   pageTitle: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '28px',
@@ -450,7 +580,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     letterSpacing: '0.04em',
     fontWeight: 400,
   },
-
   subtitle: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '11px',
@@ -458,32 +587,27 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     letterSpacing: '0.04em',
   },
-
   counterRow: {
     display: 'flex',
     alignItems: 'baseline',
     gap: '4px',
   },
-
   counter: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '28px',
     color: '#ffb4aa',
     letterSpacing: '0.04em',
   },
-
   counterDivider: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '20px',
     color: '#554240',
   },
-
   counterTotal: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '20px',
     color: '#554240',
   },
-
   counterLabel: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '10px',
@@ -492,7 +616,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#554240',
     marginLeft: '4px',
   },
-
   cardGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
@@ -503,7 +626,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     flex: '1 1 0',
     minHeight: 0,
   },
-
   card: {
     flexShrink: 0,
     backgroundColor: '#0e0e0e',
@@ -517,18 +639,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: 'border-color 0.15s',
     boxSizing: 'border-box' as const,
   },
-
   cardSelected: {
     border: '2px solid #d7040f',
     backgroundColor: '#1a0a0a',
   },
-
   cardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-
   cardTypePill: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '10px',
@@ -536,7 +655,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: '1px solid',
     padding: '1px 5px',
   },
-
   cardTiming: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '8px',
@@ -545,7 +663,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#554240',
     textTransform: 'uppercase' as const,
   },
-
   cardName: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '15px',
@@ -554,7 +671,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     lineHeight: 1.1,
   },
-
   cardDesc: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '9px',
@@ -562,7 +678,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     lineHeight: 1.4,
   },
-
   selectedTick: {
     position: 'absolute' as const,
     top: '8px',
@@ -577,14 +692,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   buttonRow: {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '8px',
     flexShrink: 0,
   },
-
   saveButton: {
     width: '100%',
     backgroundColor: '#fff',
@@ -598,7 +711,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxShadow: '4px 4px 0 0 rgba(0,0,0,1)',
     transition: 'background-color 0.15s, color 0.15s, box-shadow 0.15s',
   },
-
   enterMatchButton: {
     width: '100%',
     backgroundColor: 'transparent',
@@ -612,8 +724,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxShadow: '4px 4px 0 0 rgba(215,4,15,0.4)',
     transition: 'background-color 0.15s, color 0.15s, box-shadow 0.15s',
   },
-
-  // ── Match preview ─────────────────────────────
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -626,7 +736,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: 'relative' as const,
     zIndex: 1,
   },
-
   headerTitle: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '20px',
@@ -636,7 +745,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 400,
     lineHeight: 1,
   },
-
+  matchIdBadge: {
+    fontFamily: "'Lexend', sans-serif",
+    fontSize: '9px',
+    fontWeight: 700,
+    letterSpacing: '0.1em',
+    color: '#554240',
+    textTransform: 'uppercase' as const,
+  },
   editButton: {
     backgroundColor: 'transparent',
     border: '2px solid #554240',
@@ -648,7 +764,36 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
     transition: 'border-color 0.15s, color 0.15s',
   },
-
+  pointsPolaroid: {
+    background: '#e2e2e2',
+    padding: '8px 12px 10px 12px',
+    boxShadow: '4px 4px 0 0 rgba(0,0,0,1)',
+    border: '1px solid rgba(0,0,0,0.1)',
+    flexShrink: 0,
+    position: 'relative' as const,
+    zIndex: 1,
+  },
+  pointsPolaroidInner: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pointsPolaroidLabel: {
+    fontFamily: "'Lexend', sans-serif",
+    fontWeight: 700,
+    fontSize: '9px',
+    letterSpacing: '0.1em',
+    color: '#121414',
+    textTransform: 'uppercase' as const,
+  },
+  pointsPolaroidValue: {
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '32px',
+    color: '#121414',
+    lineHeight: 1,
+    letterSpacing: '0.02em',
+  },
   helperText: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '8px',
@@ -661,7 +806,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 1,
     flexShrink: 0,
   },
-
   pitch: {
     position: 'relative' as const,
     flex: '1 1 0',
@@ -672,14 +816,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: '3px solid white',
     zIndex: 1,
   },
-
   halfwayLine: {
     position: 'absolute' as const,
     left: 0, top: '50%',
     width: '100%', height: '2px',
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
-
   centerCircle: {
     position: 'absolute' as const,
     left: '50%', top: '50%',
@@ -688,7 +830,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '50%',
     transform: 'translate(-50%, -50%)',
   },
-
   slot: {
     position: 'absolute' as const,
     width: '72px',
@@ -699,7 +840,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     transform: 'translate(-50%, -50%)',
     cursor: 'pointer',
   },
-
   emptySlot: {
     width: '52px',
     height: '52px',
@@ -711,13 +851,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: 'rgba(0,0,0,0.35)',
     backdropFilter: 'blur(4px)',
   },
-
   emptySlotLabel: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '13px',
     letterSpacing: '0.05em',
   },
-
   selectedPlayerContainer: {
     width: '100%',
     height: '100%',
@@ -727,14 +865,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     gap: '2px',
   },
-
   selectedPlayerImage: {
     width: '54px',
     height: '54px',
     objectFit: 'contain' as const,
     filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))',
   },
-
   selectedPlayerName: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '9px',
@@ -750,7 +886,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     textOverflow: 'ellipsis',
     backdropFilter: 'blur(4px)',
   },
-
   cardBadge: {
     fontSize: '8px',
     fontFamily: "'Bebas Neue', sans-serif",
@@ -759,7 +894,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#fff',
     padding: '1px 5px',
   },
-
   sectionLabel: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '9px',
@@ -772,7 +906,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 1,
     flexShrink: 0,
   },
-
   cardBench: {
     display: 'flex',
     flexDirection: 'row' as const,
@@ -784,7 +917,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 1,
     scrollbarWidth: 'none' as const,
   },
-
   benchCard: {
     minWidth: '90px',
     backgroundColor: '#0e0e0e',
@@ -797,18 +929,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: 'border-color 0.15s',
     boxSizing: 'border-box' as const,
   },
-
   benchCardPlayed: {
     opacity: 0.55,
     backgroundColor: '#0a0a0a',
   },
-
   benchCardType: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '9px',
     letterSpacing: '0.1em',
   },
-
   benchCardName: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: '13px',
@@ -817,7 +946,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     lineHeight: 1.1,
   },
-
   playedOn: {
     fontFamily: "'Lexend', sans-serif",
     fontSize: '8px',
@@ -829,7 +957,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   },
-
   changeButton: {
     background: 'none',
     border: 'none',
