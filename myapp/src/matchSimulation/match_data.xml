@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PutDataRequest>
+  <AdvancedEvents MatchId="DFL-MAT-000001">
+    <Event>
+      <Play EventId="10000000000101" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000002"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="false" IsThrowIn="false" IsKickOff="true"
+            ThroughBall="true" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000005" ReceptionId="10000409900101"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:02.000000"
+            GameTime="000:00:12" X-Position="0.00" Y-Position="0.00" SyncedFrameId="30005"
+            MaxHeight="0.40" Distance="22.00" X-Direction="-18.00" Y-Direction="4.00"
+            PlayAngle="-15.00" PressureOnPlayer="0.00" PressureOnReceiver="0.00" xP="0.98"
+            X-PlayerSpeed="2.80" Y-PlayerSpeed="0.20"
+            X-PositionReceiver="-18.00" Y-PositionReceiver="4.00"
+            NumDefendersGoalSide="10" NumDefendersPassingLane="0" ByPassedDefenders="2"
+            PlayNumInPossession="1" NumAttackingPlayersAhead="8"
+            NumDefendingPlayersInBox="0" NumAttackingPlayersInBox="0"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900101" PlayId="10000000000101" TeamId="DFL-CLU-000001"
+                 PlayerId="DFL-OBJ-000005" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:03.200000"
+                 GameTime="000:01:08" X-Position="-18.00" Y-Position="4.00"
+                 SyncedFrameId="30035" X-ReceiverSpeed="4.10" Y-ReceiverSpeed="0.20"
+                 PressureOnReceiver="0.00" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <Play EventId="10000000000102" TeamId="DFL-CLU-000002" PlayerId="DFL-OBJ-000031"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="false" IsThrowIn="false" IsKickOff="false"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000029" ReceptionId="10000409900102"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:05.000000"
+            GameTime="000:01:60" X-Position="-5.00" Y-Position="10.00" SyncedFrameId="30075"
+            MaxHeight="0.30" Distance="14.00" X-Direction="10.00" Y-Direction="9.00"
+            PlayAngle="40.00" PressureOnPlayer="0.30" PressureOnReceiver="0.10" xP="0.90"
+            X-PlayerSpeed="1.50" Y-PlayerSpeed="0.80"
+            X-PositionReceiver="5.00" Y-PositionReceiver="19.00"
+            NumDefendersGoalSide="8" NumDefendersPassingLane="2" ByPassedDefenders="1"
+            PlayNumInPossession="1" NumAttackingPlayersAhead="5"
+            NumDefendingPlayersInBox="0" NumAttackingPlayersInBox="0"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900102" PlayId="10000000000102" TeamId="DFL-CLU-000002"
+                 PlayerId="DFL-OBJ-000029" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:06.400000"
+                 GameTime="000:02:40" X-Position="5.00" Y-Position="19.00"
+                 SyncedFrameId="30110" X-ReceiverSpeed="2.20" Y-ReceiverSpeed="0.50"
+                 PressureOnReceiver="0.10" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <TacklingGame EventId="10000000000103" WinnerTeamId="DFL-CLU-000001"
+                    WinnerPlayerId="DFL-OBJ-000002" LoserTeamId="DFL-CLU-000002"
+                    LoserPlayerId="DFL-OBJ-000029" Type="ground" InGameSection="firstHalf"
+                    IsFoul="false" SyncSuccessful="true"
+                    SyncedEventTime="2025-01-01 16:00:08.000000"
+                    GameTime="000:03:20" X-Position="6.00" Y-Position="20.00"
+                    SyncedFrameId="30150"/>
+    </Event>
+    <Event>
+      <Carry EventId="10000409800104" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000003"
+             SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:11.000000"
+             GameTime="001:00:00" X-Position="5.00" Y-Position="-10.00"
+             EndSyncedEventTime="2025-01-01 16:00:13.500000"
+             EndGameTime="001:02:40" X-EndPosition="26.80" Y-EndPosition="-8.20"
+             DefensiveStateStart="balanced" DefensiveStateEnd="balanced"
+             Distance="22.10" SyncedFrameId="30225" EndSyncedFrameId="30288"
+             InGameSection="firstHalf"/>
+    </Event>
+    <Event>
+      <Play EventId="10000000000105" TeamId="DFL-CLU-000002" PlayerId="DFL-OBJ-000027"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="false" IsThrowIn="false" IsKickOff="false"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000031" ReceptionId="10000409900105"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:14.000000"
+            GameTime="001:03:00" X-Position="-12.00" Y-Position="15.00" SyncedFrameId="30300"
+            MaxHeight="0.25" Distance="18.00" X-Direction="14.00" Y-Direction="11.00"
+            PlayAngle="35.00" PressureOnPlayer="0.20" PressureOnReceiver="0.05" xP="0.88"
+            X-PlayerSpeed="2.10" Y-PlayerSpeed="1.00"
+            X-PositionReceiver="2.00" Y-PositionReceiver="26.00"
+            NumDefendersGoalSide="9" NumDefendersPassingLane="1" ByPassedDefenders="0"
+            PlayNumInPossession="1" NumAttackingPlayersAhead="6"
+            NumDefendingPlayersInBox="0" NumAttackingPlayersInBox="0"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900105" PlayId="10000000000105" TeamId="DFL-CLU-000002"
+                 PlayerId="DFL-OBJ-000031" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:15.600000"
+                 GameTime="001:04:56" X-Position="2.00" Y-Position="26.00"
+                 SyncedFrameId="30340" X-ReceiverSpeed="3.10" Y-ReceiverSpeed="-0.80"
+                 PressureOnReceiver="0.05" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <OtherBallAction EventId="10000000000106" TeamId="DFL-CLU-000001"
+                       PlayerId="DFL-OBJ-000004" DefensiveState="balanced"
+                       InGameSection="firstHalf" IsDefensiveClearance="true"
+                       SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:16.800000"
+                       GameTime="001:05:76" X-Position="3.50" Y-Position="27.00"
+                       SyncedFrameId="10370"/>
+    </Event>
+    <Event>
+      <ShotAtGoal EventId="10000000000107" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000007"
+                  IsPenalty="false" IsFreeKick="false" IsCorner="false"
+                  SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:21.000000"
+                  GameTime="002:00:00" X-Position="-38.00" Y-Position="8.00"
+                  SyncedFrameId="30475" xG="0.12" AngleToGoal="12.00" DistanceToGoal="18.00"
+                  PressureOnPlayer="0.10" X-PlayerSpeed="-4.20" Y-PlayerSpeed="0.80"
+                  DistanceGoalkeeperToGoal="0.50" X-PositionGoalkeeper="-52.00"
+                  Y-PositionGoalkeeper="0.00" ShotResult="woodWork"
+                  DefensiveState="balanced" InGameSection="firstHalf"
+                  NumDefendingPlayersInBox="8" NumAttackingPlayersInBox="3"
+                  NumDefendersInShotLane="1">
+        <ShotWoodWork PlayerId="DFL-OBJ-000007"/>
+      </ShotAtGoal>
+    </Event>
+    <Event>
+      <Play EventId="10000000000108" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000003"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="false" IsThrowIn="true" IsKickOff="false"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000004" ReceptionId="10000409900108"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:23.000000"
+            GameTime="002:02:00" X-Position="18.00" Y-Position="34.00" SyncedFrameId="30525"
+            MaxHeight="1.80" Distance="11.00" X-Direction="7.00" Y-Direction="-9.00"
+            PressureOnReceiver="0.00" X-PlayerSpeed="-0.10" Y-PlayerSpeed="-0.05"
+            X-PositionReceiver="25.00" Y-PositionReceiver="25.00"
+            ByPassedDefenders="-1" PlayNumInPossession="1" NumAttackingPlayersAhead="4"
+            NumDefendingPlayersInBox="0" NumAttackingPlayersInBox="0"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900108" PlayId="10000000000108" TeamId="DFL-CLU-000001"
+                 PlayerId="DFL-OBJ-000004" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:24.600000"
+                 GameTime="002:03:56" X-Position="25.00" Y-Position="25.00"
+                 SyncedFrameId="10565" X-ReceiverSpeed="0.30" Y-ReceiverSpeed="-0.50"
+                 PressureOnReceiver="0.00" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <Foul EventId="10000000000109" FoulerTeamId="DFL-CLU-000002"
+            FoulerPlayerId="DFL-OBJ-000027" FouledTeamId="DFL-CLU-000001"
+            FouledPlayerId="DFL-OBJ-000003" FoulType="foul" DefensiveState="balanced"
+            InGameSection="firstHalf" SyncSuccessful="true"
+            SyncedEventTime="2025-01-01 16:00:26.000000"
+            GameTime="002:05:20" X-Position="22.00" Y-Position="18.00"
+            SyncedFrameId="10590"/>
+    </Event>
+    <Event>
+      <ShotAtGoal EventId="10000000000110" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000004"
+                  IsPenalty="false" IsFreeKick="false" IsCorner="false"
+                  SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:31.000000"
+                  GameTime="003:00:00" X-Position="-41.00" Y-Position="4.00"
+                  SyncedFrameId="30700" xG="0.09" AngleToGoal="8.00" DistanceToGoal="14.00"
+                  PressureOnPlayer="0.20" X-PlayerSpeed="-5.10" Y-PlayerSpeed="-0.40"
+                  DistanceGoalkeeperToGoal="0.30" X-PositionGoalkeeper="-52.00"
+                  Y-PositionGoalkeeper="0.20" ShotResult="savedShot"
+                  DefensiveState="balanced" InGameSection="firstHalf"
+                  NumDefendingPlayersInBox="9" NumAttackingPlayersInBox="4"
+                  NumDefendersInShotLane="1">
+        <SavedShot GoalKeeper="DFL-OBJ-000030"/>
+      </ShotAtGoal>
+    </Event>
+    <Event>
+      <Play EventId="10000000000111" TeamId="DFL-CLU-000002" PlayerId="DFL-OBJ-000030"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="true" IsThrowIn="false" IsKickOff="false"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000027" ReceptionId="10000409900111"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:33.000000"
+            GameTime="003:02:00" X-Position="-52.00" Y-Position="0.00" SyncedFrameId="30750"
+            MaxHeight="4.50" Distance="45.00" X-Direction="40.00" Y-Direction="15.00"
+            PlayAngle="-20.00" PressureOnPlayer="0.00" PressureOnReceiver="0.10" xP="0.80"
+            X-PlayerSpeed="0.50" Y-PlayerSpeed="0.10"
+            X-PositionReceiver="-12.00" Y-PositionReceiver="15.00"
+            NumDefendersGoalSide="11" NumDefendersPassingLane="0" ByPassedDefenders="0"
+            PlayNumInPossession="1" NumAttackingPlayersAhead="3"
+            NumDefendingPlayersInBox="0" NumAttackingPlayersInBox="0"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900111" PlayId="10000000000111" TeamId="DFL-CLU-000002"
+                 PlayerId="DFL-OBJ-000027" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:35.200000"
+                 GameTime="003:04:16" X-Position="-12.00" Y-Position="15.00"
+                 SyncedFrameId="10805" X-ReceiverSpeed="2.80" Y-ReceiverSpeed="1.20"
+                 PressureOnReceiver="0.10" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <TacklingGame EventId="10000000000112" WinnerTeamId="DFL-CLU-000001"
+                    WinnerPlayerId="DFL-OBJ-000005" LoserTeamId="DFL-CLU-000002"
+                    LoserPlayerId="DFL-OBJ-000027" Type="ground" InGameSection="firstHalf"
+                    IsFoul="false" SyncSuccessful="true"
+                    SyncedEventTime="2025-01-01 16:00:37.000000"
+                    GameTime="003:06:00" X-Position="-10.00" Y-Position="16.00"
+                    SyncedFrameId="10840"/>
+    </Event>
+    <Event>
+      <Play EventId="10000000000113" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000006"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="true" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="false" IsThrowIn="false" IsKickOff="false"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000005" ReceptionId="10000409900113"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:41.000000"
+            GameTime="004:00:00" X-Position="-44.00" Y-Position="30.00" SyncedFrameId="30950"
+            MaxHeight="2.20" Distance="18.00" X-Direction="-6.00" Y-Direction="-28.00"
+            PlayAngle="78.00" PressureOnPlayer="0.05" PressureOnReceiver="0.10" xP="0.70"
+            X-PlayerSpeed="-3.50" Y-PlayerSpeed="-1.20"
+            X-PositionReceiver="-50.00" Y-PositionReceiver="2.00"
+            NumDefendersGoalSide="7" NumDefendersPassingLane="2" ByPassedDefenders="4"
+            PlayNumInPossession="3" NumAttackingPlayersAhead="5"
+            NumDefendingPlayersInBox="6" NumAttackingPlayersInBox="4"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900113" PlayId="10000000000113" TeamId="DFL-CLU-000001"
+                 PlayerId="DFL-OBJ-000005" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:42.400000"
+                 GameTime="004:01:40" X-Position="-50.00" Y-Position="2.00"
+                 SyncedFrameId="30985" X-ReceiverSpeed="-5.20" Y-ReceiverSpeed="0.30"
+                 PressureOnReceiver="0.10" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <ShotAtGoal EventId="10000000000114" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000005"
+                  IsPenalty="false" IsFreeKick="false" IsCorner="false"
+                  AssistAction="crossFromOpenPlay"
+                  SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:43.000000"
+                  GameTime="004:02:00" X-Position="-50.00" Y-Position="2.00"
+                  SyncedFrameId="31000" xG="0.42" AngleToGoal="5.00" DistanceToGoal="6.00"
+                  PressureOnPlayer="0.05" X-PlayerSpeed="-6.80" Y-PlayerSpeed="0.20"
+                  DistanceGoalkeeperToGoal="0.20" X-PositionGoalkeeper="-52.00"
+                  Y-PositionGoalkeeper="-1.00" ShotResult="successfulShot"
+                  DefensiveState="balanced" InGameSection="firstHalf"
+                  NumDefendingPlayersInBox="7" NumAttackingPlayersInBox="5"
+                  NumDefendersInShotLane="0">
+        <SuccessfulShot AssistShotAtGoal="DFL-OBJ-000006" Assist="DFL-OBJ-000006"
+                        ExtendedTypeOfShot="other"/>
+      </ShotAtGoal>
+    </Event>
+    <Event>
+      <Play EventId="10000000000115" TeamId="DFL-CLU-000002" PlayerId="DFL-OBJ-000029"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="false" IsThrowIn="false" IsKickOff="true"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000031" ReceptionId="10000409900115"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:46.000000"
+            GameTime="004:05:00" X-Position="0.00" Y-Position="0.00" SyncedFrameId="31065"
+            MaxHeight="0.30" Distance="12.00" X-Direction="8.00" Y-Direction="9.00"
+            PlayAngle="48.00" PressureOnPlayer="0.00" PressureOnReceiver="0.00" xP="0.99"
+            X-PlayerSpeed="1.80" Y-PlayerSpeed="0.60"
+            X-PositionReceiver="8.00" Y-PositionReceiver="9.00"
+            NumDefendersGoalSide="10" NumDefendersPassingLane="0" ByPassedDefenders="0"
+            PlayNumInPossession="1" NumAttackingPlayersAhead="7"
+            NumDefendingPlayersInBox="0" NumAttackingPlayersInBox="0"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900115" PlayId="10000000000115" TeamId="DFL-CLU-000002"
+                 PlayerId="DFL-OBJ-000031" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:47.600000"
+                 GameTime="004:06:56" X-Position="8.00" Y-Position="9.00"
+                 SyncedFrameId="31105" X-ReceiverSpeed="2.50" Y-ReceiverSpeed="0.40"
+                 PressureOnReceiver="0.00" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <Play EventId="10000000000116" TeamId="DFL-CLU-000002" PlayerId="DFL-OBJ-000031"
+            Evaluation="unsuccessful" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="false" IsGoalKick="false" IsThrowIn="false" IsKickOff="false"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000027" ReceptionId="10000409900116"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:49.000000"
+            GameTime="004:08:00" X-Position="9.00" Y-Position="10.00" SyncedFrameId="31135"
+            MaxHeight="0.50" Distance="20.00" X-Direction="15.00" Y-Direction="13.00"
+            PlayAngle="41.00" PressureOnPlayer="0.60" PressureOnReceiver="0.20" xP="0.72"
+            X-PlayerSpeed="-3.10" Y-PlayerSpeed="1.80"
+            X-PositionReceiver="24.00" Y-PositionReceiver="23.00"
+            NumDefendersGoalSide="9" NumDefendersPassingLane="3" ByPassedDefenders="1"
+            PlayNumInPossession="2" NumAttackingPlayersAhead="5"
+            NumDefendingPlayersInBox="0" NumAttackingPlayersInBox="0"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900116" PlayId="10000000000116" TeamId="DFL-CLU-000001"
+                 PlayerId="DFL-OBJ-000002" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:50.400000"
+                 GameTime="004:09:40" X-Position="24.00" Y-Position="23.00"
+                 SyncedFrameId="31170" X-ReceiverSpeed="-0.40" Y-ReceiverSpeed="-0.60"
+                 PressureOnReceiver="0.20" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="true"/>
+    </Event>
+    <Event>
+      <Delete EventId="10000000000117" Reason="videoAssistantAction"
+              SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:51.000000"
+              GameTime="005:00:00" X-Position="-48.00" Y-Position="1.50"
+              SyncedFrameId="31200" InGameSection="firstHalf"/>
+    </Event>
+    <Event>
+      <Play EventId="10000000000118" TeamId="DFL-CLU-000001" PlayerId="DFL-OBJ-000004"
+            Evaluation="successfullyCompleted" IsPass="true" IsCross="false" IsCorner="false"
+            IsFreeKick="true" IsGoalKick="false" IsThrowIn="false" IsKickOff="false"
+            ThroughBall="false" BackLineBreak="false" DefensiveState="balanced"
+            InGameSection="firstHalf" ReceiverId="DFL-OBJ-000007" ReceptionId="10000409900118"
+            SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:53.000000"
+            GameTime="005:02:00" X-Position="-30.00" Y-Position="20.00" SyncedFrameId="31250"
+            MaxHeight="1.20" Distance="16.00" X-Direction="-12.00" Y-Direction="-10.00"
+            PlayAngle="-140.00" PressureOnPlayer="0.00" PressureOnReceiver="0.00" xP="0.96"
+            X-PlayerSpeed="-1.50" Y-PlayerSpeed="-0.30"
+            X-PositionReceiver="-42.00" Y-PositionReceiver="10.00"
+            NumDefendersGoalSide="10" NumDefendersPassingLane="0" ByPassedDefenders="1"
+            PlayNumInPossession="1" NumAttackingPlayersAhead="6"
+            NumDefendingPlayersInBox="2" NumAttackingPlayersInBox="3"/>
+    </Event>
+    <Event>
+      <Reception EventId="10000409900118" PlayId="10000000000118" TeamId="DFL-CLU-000001"
+                 PlayerId="DFL-OBJ-000007" SyncSuccessful="true"
+                 SyncedEventTime="2025-01-01 16:00:54.600000"
+                 GameTime="005:03:56" X-Position="-42.00" Y-Position="10.00"
+                 SyncedFrameId="31290" X-ReceiverSpeed="-2.10" Y-ReceiverSpeed="0.80"
+                 PressureOnReceiver="0.00" DefensiveState="balanced"
+                 InGameSection="firstHalf" IsInterception="false"/>
+    </Event>
+    <Event>
+      <OtherBallAction EventId="10000000000119" TeamId="DFL-CLU-000002"
+                       PlayerId="DFL-OBJ-000030" DefensiveState="balanced"
+                       InGameSection="firstHalf" IsDefensiveClearance="false"
+                       SyncSuccessful="true" SyncedEventTime="2025-01-01 16:00:56.000000"
+                       GameTime="005:05:20" X-Position="-51.00" Y-Position="3.00"
+                       SyncedFrameId="11320"/>
+    </Event>
+    <Event>
+      <TacklingGame EventId="10000000000120" WinnerTeamId="DFL-CLU-000002"
+                    WinnerPlayerId="DFL-OBJ-000031" LoserTeamId="DFL-CLU-000001"
+                    LoserPlayerId="DFL-OBJ-000006" Type="ground" InGameSection="firstHalf"
+                    IsFoul="true" SyncSuccessful="true"
+                    SyncedEventTime="2025-01-01 16:00:57.500000"
+                    GameTime="005:06:75" X-Position="-20.00" Y-Position="14.00"
+                    SyncedFrameId="11343"/>
+    </Event>
+    <Event>
+      <Foul EventId="10000000000121" FoulerTeamId="DFL-CLU-000002"
+            FoulerPlayerId="DFL-OBJ-000031" FouledTeamId="DFL-CLU-000001"
+            FouledPlayerId="DFL-OBJ-000006" FoulType="foul" DefensiveState="balanced"
+            InGameSection="firstHalf" SyncSuccessful="true"
+            SyncedEventTime="2025-01-01 16:00:57.500000"
+            GameTime="005:06:75" X-Position="-20.00" Y-Position="14.00"
+            SyncedFrameId="11343"/>
+    </Event>
+    <Event EventId="10000000000122" MatchId="DFL-MAT-000001"
+           EventTime="2025-01-01 16:01:01.000000">
+      <FinalWhistle GameSection="secondHalf" BreakingOff="false" FinalResult="1:0"
+                    GameTime="006:00:00"/>
+    </Event>
+
+  </AdvancedEvents>
+</PutDataRequest>

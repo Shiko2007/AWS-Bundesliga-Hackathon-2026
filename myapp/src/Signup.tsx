@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import bundesligaLogo from './assets/logos/Bundesliga.png';
 import bayernLogo from './assets/logos/Bayern.png';
 import dortmundLogo from './assets/logos/Dortmund.png';
 import leverkusenLogo from './assets/logos/Leverkusen.png';
@@ -19,6 +18,7 @@ import heidenheimLogo from './assets/logos/Heidenheim.png';
 import stpauliLogo from './assets/logos/St.Pauli.png';
 import hsvLogo from './assets/logos/Hamburg.png';
 import kolnLogo from './assets/logos/Koln.png';
+import grainTexture from './assets/images/grain.png';
 
 function Signup() {
   const navigate = useNavigate();
@@ -28,10 +28,9 @@ function Signup() {
   const [password, setPassword] = useState('');
   const [confirmationPassword, setConfirmationPassword] = useState('');
   const [favoriteTeam, setFavoriteTeam] = useState('');
-  const [hovered, setHovered] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [error, setError] = useState('');         // stores error messages
-  const [loading, setLoading] = useState(false);  // tracks if request is in progress
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -64,183 +63,240 @@ function Signup() {
   };
 
   async function handleSignup() {
-    // Check all fields are filled
     if (!firstName || !lastName || !email || !password || !confirmationPassword || !favoriteTeam) {
-      setError('Please fill in all fields')
-      return
+      setError('Please fill in all fields');
+      return;
     }
-
-    // Check passwords match
     if (password !== confirmationPassword) {
-      setError('Passwords do not match')
-      return
+      setError('Passwords do not match');
+      return;
     }
-
     try {
-      setLoading(true)
-      setError('')
+      setLoading(true);
+      setError('');
 
-      const response = await fetch("http://localhost:4000/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, email, password, favoriteTeam })
-      });
+      const response = await fetch(
+        'https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api/signup',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstName, lastName, email, password, favoriteTeam }),
+        }
+      );
 
       const data = await response.json();
 
       if (data.success) {
-        console.log("Registered successfully!", data)
-        navigate('/team-builder', { state: { favoriteTeam } });
-        // e.g. redirect to login: navigate("/")
-      } else {
-        setError(data.error || "Signup failed")
-        console.log("Signup failed:", data.error)
-      }
+        localStorage.setItem('userId', data.userId);
+        localStorage.setItem('team', data.team);
+        localStorage.setItem('email', data.email);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('formation', data.formation || '');
+        localStorage.setItem('players', JSON.stringify(data.players || []));
 
+        navigate('/dashboard', { state: { favoriteTeam } });
+      } else {
+        setError(data.error || 'Signup failed');
+      }
     } catch (err) {
-      setError("Could not connect to server")
+      setError('Could not connect to server');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
     <div style={styles.screen}>
       <div style={styles.phone}>
-        <div style={styles.topBar}>
-          <img
-            src={bundesligaLogo}
-            alt="Bundesliga logo"
-            style={styles.logo}
-          />
-        </div>
 
-        <h1 style={styles.title}>Sign Up</h1>
-
-        <input
-          type="text"
-          placeholder="Enter your first name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          style={styles.input}
+        {/* Grain overlay */}
+        <div
+          style={{
+            ...styles.grain,
+            backgroundImage: `url(${grainTexture})`,
+          }}
         />
 
-        <input
-          type="text"
-          placeholder="Enter your last name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          style={styles.input}
-        />
+        {/* Header */}
+        <header style={styles.header}>
+          <div style={styles.headerInner}>
+            <h1 style={styles.headerTitle}>‎ THE PITCH</h1>
+          </div>
+        </header>
 
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-        />
+        <main style={styles.main}>
+          <p style={styles.pageTitle}>SIGN UP</p>
 
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
-
-        <input
-          type="password"
-          placeholder="Confirm your password"
-          value={confirmationPassword}
-          onChange={(e) => setConfirmationPassword(e.target.value)}
-          style={styles.input}
-        />
-
-        <div style={styles.dropdownWrapper} ref={dropdownRef}>
-          <div
-            style={styles.dropdownHeader}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <div style={styles.dropdownHeaderContent}>
-              {selectedTeamObject ? (
-                <>
-                  <img
-                    src={selectedTeamObject.logo}
-                    alt={selectedTeamObject.name}
-                    style={styles.teamLogo}
-                  />
-                  <span style={styles.dropdownSelectedText}>
-                    {selectedTeamObject.name}
-                  </span>
-                </>
-              ) : (
-                <span style={styles.dropdownPlaceholder}>
-                  Select your favorite team
-                </span>
-              )}
-            </div>
-            <span style={styles.arrow}>{isDropdownOpen ? '▲' : '▼'}</span>
+          {/* First Name */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>FIRST NAME</label>
+            <input
+              type="text"
+              placeholder="HARRY"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              style={styles.input}
+              onFocus={(e) => (e.currentTarget.style.borderColor = '#d7040f')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = '#554240')}
+            />
           </div>
 
-          {isDropdownOpen && (
-            <div style={styles.dropdownList}>
-              {teams.map((team) => (
-                <div
-                  key={team.name}
-                  style={{
-                    ...styles.dropdownItem,
-                    ...(favoriteTeam === team.name ? styles.dropdownItemSelected : {}),
-                  }}
-                  onClick={() => handleTeamSelect(team.name)}
-                >
-                  <div style={styles.teamRow}>
-                    <img src={team.logo} alt={team.name} style={styles.teamLogo} />
-                    <span>{team.name}</span>
-                  </div>
+          {/* Last Name */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>LAST NAME</label>
+            <input
+              type="text"
+              placeholder="KANE"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              style={styles.input}
+              onFocus={(e) => (e.currentTarget.style.borderColor = '#d7040f')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = '#554240')}
+            />
+          </div>
+
+          {/* Email */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>PLAYER EMAIL</label>
+            <input
+              type="email"
+              placeholder="STRIKER@MAIL.COM"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={styles.input}
+              onFocus={(e) => (e.currentTarget.style.borderColor = '#d7040f')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = '#554240')}
+            />
+          </div>
+
+          {/* Password */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>SECURITY CLEARANCE</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={styles.input}
+              onFocus={(e) => (e.currentTarget.style.borderColor = '#d7040f')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = '#554240')}
+            />
+          </div>
+
+          {/* Confirm Password */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>CONFIRM CLEARANCE</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={confirmationPassword}
+              onChange={(e) => setConfirmationPassword(e.target.value)}
+              style={styles.input}
+              onFocus={(e) => (e.currentTarget.style.borderColor = '#d7040f')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = '#554240')}
+            />
+          </div>
+
+          {/* Team Dropdown */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>FAVORITE CLUB</label>
+            <div style={styles.dropdownWrapper} ref={dropdownRef}>
+              <div
+                style={styles.dropdownHeader}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onFocus={(e) => (e.currentTarget.style.borderColor = '#d7040f')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = '#554240')}
+                tabIndex={0}
+              >
+                <div style={styles.dropdownHeaderContent}>
+                  {selectedTeamObject ? (
+                    <>
+                      <img
+                        src={selectedTeamObject.logo}
+                        alt={selectedTeamObject.name}
+                        style={styles.teamLogo}
+                      />
+                      <span style={styles.dropdownSelectedText}>
+                        {selectedTeamObject.name.toUpperCase()}
+                      </span>
+                    </>
+                  ) : (
+                    <span style={styles.dropdownPlaceholder}>SELECT YOUR SQUAD</span>
+                  )}
                 </div>
-              ))}
+                <span style={styles.arrow}>{isDropdownOpen ? '▲' : '▼'}</span>
+              </div>
+
+              {isDropdownOpen && (
+                <div style={styles.dropdownList}>
+                  {teams.map((team) => (
+                    <div
+                      key={team.name}
+                      style={{
+                        ...styles.dropdownItem,
+                        ...(favoriteTeam === team.name ? styles.dropdownItemSelected : {}),
+                      }}
+                      onClick={() => handleTeamSelect(team.name)}
+                    >
+                      <img src={team.logo} alt={team.name} style={styles.teamLogo} />
+                      <span>{team.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {error && <p style={styles.errorText}>{error}</p>}
+
+          <button
+            onClick={handleSignup}
+            disabled={loading}
+            style={loading ? { ...styles.signUpButton, ...styles.signUpButtonDisabled } : styles.signUpButton}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = '#d7040f';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.boxShadow = 'none';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.color = '#1a1c1c';
+                e.currentTarget.style.boxShadow = '4px 4px 0 0 rgba(0,0,0,1)';
+              }
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'scale(0.98)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {loading ? 'SIGNING UP...' : 'SIGN UP'}
+          </button>
+
+          <div style={styles.divider}>
+            <p style={styles.dividerText}>Already on the squad?</p>
+            <Link to="/" style={styles.loginLink}>LOG IN</Link>
+          </div>
+        </main>
+
+        <div style={styles.phoneBottomBar}>
+          <div style={styles.phoneHomeIndicator} />
         </div>
-
-        {/* Shows error message if something goes wrong */}
-        {error && <p style={styles.error}>{error}</p>}
-
-        <button
-  onClick={handleSignup}
-  disabled={loading}
-  style={{
-    ...styles.button,
-    ...(hovered ? styles.buttonHover : {}),
-    ...(loading ? styles.buttonDisabled : {}),
-  }}
-  onMouseEnter={() => setHovered(true)}
-  onMouseLeave={() => setHovered(false)}
->
-  {loading ? "Signing up..." : "Sign Up"}
-</button>
-
-        <p style={styles.footer}>
-          Already have an account?{' '}
-          <Link to="/" style={styles.link}>Login</Link>
-        </p>
       </div>
     </div>
   );
@@ -248,68 +304,130 @@ function Signup() {
 
 const styles: { [key: string]: React.CSSProperties } = {
   screen: {
+    minHeight: '100vh',
+    backgroundColor: '#ffffff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f0f0f0',
-    fontFamily: 'sans-serif',
+    fontFamily: "'Lexend', sans-serif",
     padding: '20px',
   },
   phone: {
     width: '350px',
     minHeight: '760px',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#121414',
     borderRadius: '40px',
     boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-    padding: '36px 30px',
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    gap: '16px',
-    boxSizing: 'border-box',
-    position: 'relative',
+    flexDirection: 'column' as const,
+    overflow: 'hidden',
+    position: 'relative' as const,
+    boxSizing: 'border-box' as const,
   },
-  logo: {
-    width: '100px',
-    height: '100px',
-    objectFit: 'contain',
-    marginBottom: '4px',
+  grain: {
+    position: 'absolute' as const,
+    inset: 0,
+    opacity: 0.2,
+    pointerEvents: 'none' as const,
+    zIndex: 0,
+    backgroundSize: '200px 200px',
   },
-  title: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#111',
-    margin: '0 0 10px 0',
-    textAlign: 'center',
+  header: {
+    width: '100%',
+    borderBottom: '1px solid #554240',
+    backgroundColor: '#121414',
+    padding: '20px 20px 10px',
+    boxSizing: 'border-box' as const,
+    flexShrink: 0,
+    position: 'relative' as const,
+    zIndex: 1,
+  },
+  headerInner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+    headerIcon: {
+    fontSize: '24px',
+    lineHeight: 1,
+  },
+  headerTitle: {
+    fontFamily: "'Bebas Neue', sans-serif",
+    color: '#ffb4aa',
+    letterSpacing: '0.15em',
+    fontSize: '24px',
+    margin: 0,
+    fontWeight: 400,
+  },
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    padding: '16px 24px 8px',
+    gap: '10px',
+    overflowY: 'auto' as const,
+    position: 'relative' as const,
+    zIndex: 1,
+  },
+  pageTitle: {
+    fontFamily: "'Bebas Neue', sans-serif",
+    color: '#ffb4aa',
+    fontSize: '32px',
+    letterSpacing: '0.1em',
+    margin: '30px 0 0',
+    alignSelf: 'flex-start',
+  },
+  fieldGroup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+    width: '100%',
+  },
+  label: {
+    fontFamily: "'Lexend', sans-serif",
+    color: '#ffb4aa',
+    fontSize: '11px',
+    fontWeight: 700,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase' as const,
+    padding: '0 2px',
   },
   input: {
     width: '100%',
-    padding: '12px 14px',
-    fontSize: '14px',
-    borderRadius: '12px',
-    border: '1px solid #ddd',
+    backgroundColor: '#0c0f0f',
+    border: '2px solid #554240',
+    color: '#fff',
+    fontFamily: "'Lexend', sans-serif",
+    fontWeight: 700,
+    fontSize: '13px',
+    letterSpacing: '0.08em',
+    padding: '10px 12px',
     outline: 'none',
-    boxSizing: 'border-box',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    boxSizing: 'border-box' as const,
+    transition: 'border-color 0.15s',
   },
   dropdownWrapper: {
     width: '100%',
-    position: 'relative',
+    position: 'relative' as const,
   },
   dropdownHeader: {
     width: '100%',
-    padding: '12px 14px',
-    borderRadius: '12px',
-    border: '1px solid #ddd',
-    backgroundColor: '#fff',
-    boxSizing: 'border-box',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    backgroundColor: '#0c0f0f',
+    border: '2px solid #554240',
+    color: '#fff',
+    fontFamily: "'Lexend', sans-serif",
+    fontWeight: 700,
+    fontSize: '13px',
+    letterSpacing: '0.08em',
+    padding: '10px 12px',
+    boxSizing: 'border-box' as const,
     cursor: 'pointer',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: '48px',
+    minHeight: '44px',
+    transition: 'border-color 0.15s',
   },
   dropdownHeaderContent: {
     display: 'flex',
@@ -317,95 +435,120 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '10px',
   },
   dropdownPlaceholder: {
-    color: '#999',
+    color: '#554240',
+    fontWeight: 400,
   },
   dropdownSelectedText: {
-    color: '#111',
+    color: '#fff',
   },
   arrow: {
-    fontSize: '12px',
-    color: '#555',
-    marginLeft: '12px',
-  },
-  dropdownList: {
-    position: 'absolute',
-    top: '110%',
-    left: 0,
-    width: '100%',
-    maxHeight: '180px',
-    overflowY: 'auto',
-    backgroundColor: '#fff',
-    border: '1px solid #ddd',
-    borderRadius: '12px',
-    boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-    zIndex: 10,
-  },
-  dropdownItem: {
-    padding: '12px 14px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    backgroundColor: '#fff',
-    borderBottom: '1px solid #f3f3f3',
-  },
-  dropdownItemSelected: {
-    backgroundColor: '#fdecea',
-    color: '#E32219',
-    fontWeight: '600',
-  },
-  teamRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  teamLogo: {
-    width: '20px',
-    height: '20px',
-    objectFit: 'contain',
+    fontSize: '10px',
+    color: '#ffb4aa',
+    marginLeft: '8px',
     flexShrink: 0,
   },
-  button: {
+  dropdownList: {
+    position: 'absolute' as const,
+    top: '100%',
+    left: 0,
     width: '100%',
-    padding: '13px',
-    fontSize: '15px',
-    fontWeight: '600',
-    backgroundColor: '#E32219',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
+    maxHeight: '160px',
+    overflowY: 'auto' as const,
+    backgroundColor: '#1a1c1c',
+    border: '2px solid #554240',
+    borderTop: 'none',
+    zIndex: 20,
+    boxSizing: 'border-box' as const,
+  },
+  dropdownItem: {
+    padding: '10px 12px',
     cursor: 'pointer',
+    fontSize: '13px',
+    fontFamily: "'Lexend', sans-serif",
+    borderBottom: '1px solid #2a2c2c',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#dcc0bd',
+    letterSpacing: '0.04em',
+  },
+  dropdownItemSelected: {
+    backgroundColor: '#2a1c1c',
+    color: '#ffb4aa',
+  },
+  teamLogo: {
+    width: '18px',
+    height: '18px',
+    objectFit: 'contain' as const,
+    flexShrink: 0,
+  },
+  errorText: {
+    color: '#ffb4ab',
+    fontSize: '12px',
+    margin: 0,
+    fontWeight: 700,
+    letterSpacing: '0.05em',
+    textAlign: 'center',
+  },
+  signUpButton: {
+    width: '100%',
+    backgroundColor: '#fff',
+    color: '#1a1c1c',
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '20px',
+    letterSpacing: '0.05em',
+    border: 'none',
+    padding: '10px',
+    cursor: 'pointer',
+    boxShadow: '4px 4px 0 0 rgba(0,0,0,1)',
+    transition: 'background-color 0.15s, color 0.15s, box-shadow 0.15s',
+    textTransform: 'uppercase' as const,
     marginTop: '4px',
-    transition: 'background-color 0.2s ease',
-    boxSizing: 'border-box',
   },
-  buttonHover: {
-    backgroundColor: '#b81a13',
-  },
-  buttonDisabled: {
-    backgroundColor: '#aaa',
+  signUpButtonDisabled: {
+    backgroundColor: '#554240',
+    color: '#a38b88',
+    boxShadow: 'none',
     cursor: 'not-allowed',
   },
-  error: {
-    color: '#E32219',
-    fontSize: '13px',
-    margin: '0',
-    textAlign: 'center',
-  },
-  footer: {
-    fontSize: '13px',
-    color: '#777',
-    marginTop: '8px',
-    textAlign: 'center',
-  },
-  link: {
-    color: '#E32219',
-    fontWeight: '600',
-    cursor: 'pointer',
-    textDecoration: 'none',
-  },
-  topBar: {
-    width: '100%',
+  divider: {
     display: 'flex',
-    justifyContent: 'flex-end',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '6px',
+    borderTop: '1px solid #554240',
+    paddingTop: '10px',
+    paddingBottom: '2px',
+    width: '100%',
+  },
+  dividerText: {
+    fontFamily: "'Lexend', sans-serif",
+    color: '#dcc0bd',
+    fontSize: '14px',
+    margin: 0,
+  },
+  loginLink: {
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '22px',
+    color: '#ffb4aa',
+    textDecoration: 'none',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase' as const,
+  },
+  phoneBottomBar: {
+    padding: '12px 0 20px',
+    display: 'flex',
+    justifyContent: 'center',
+    backgroundColor: '#121414',
+    flexShrink: 0,
+    position: 'relative' as const,
+    zIndex: 1,
+  },
+  phoneHomeIndicator: {
+    width: '120px',
+    height: '4px',
+    backgroundColor: '#554240',
+    borderRadius: '2px',
   },
 };
 
