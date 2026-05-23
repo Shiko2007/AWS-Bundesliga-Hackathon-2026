@@ -10,15 +10,14 @@ Files needed (place in the same folder as this script):
 How it works:
   1. Sends lineup.xml to filterlivefeed immediately
   2. Reads all <Event> elements from match_data.xml
-  3. Groups them into 2-minute windows based on their GameTime attribute
+  3. Groups them into WINDOW_MINUTES-minute windows based on their GameTime attribute
      (GameTime format in the DFL feed: "045:30:12" = 45 min 30 sec 12 frames)
-  4. Every 2 real-world minutes, sends the next window to filterlivefeed
+  4. Every window interval, sends the next window to filterlivefeed
   5. Finishes when all events have been sent
 
 Speed multiplier:
-  SPEED = 1.0  →  real time  (45 windows x 2 min = 90 min)
-  SPEED = 10.0 →  9 min demo (45 windows x 12 sec)
-  SPEED = 45.0 →  2 min demo (45 windows x ~2.6 sec)
+  SPEED = 1.0  →  real time  (6 windows x 1 min = 6 min)
+  SPEED = 6.0  →  1 min demo (6 windows x 10 sec)
 """
 
 import requests
@@ -28,12 +27,12 @@ from collections import defaultdict
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-FEED_URL       = 'https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api/data'
-LINEUP_FILE    = 'lineup.xml'
-MATCH_DATA_FILE = 'match_data.xml'
-WINDOW_MINUTES        = 0.25      # group events into N-minute buckets
-SPEED                 = 1.0    # 1.0 = real time, 10.0 = 9-min demo
-LINEUP_KICKOFF_DELAY  = 300    # seconds between lineup send and kickoff (5 min)
+FEED_URL              = 'https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api/data'
+LINEUP_FILE           = 'lineup.xml'
+MATCH_DATA_FILE       = 'match_data.xml'
+WINDOW_MINUTES        = 1      # group events into N-minute buckets
+SPEED                 = 10.0   # 1.0 = real time, 6.0 = 10s per window
+LINEUP_KICKOFF_DELAY  = 5    # seconds between lineup send and kickoff
 
 
 # ── GameTime parser ───────────────────────────────────────────────────────────
@@ -109,15 +108,10 @@ def main():
     print(f'Total events in file: {len(all_events)}')
 
     # ── Group events into WINDOW_MINUTES-minute buckets ───────────────────────
-    # Bucket 0  = minutes 0–1
-    # Bucket 1  = minutes 2–3
-    # ...
-    # Bucket 44 = minutes 88–89  (plus stoppage time in bucket 45+)
-
     buckets: dict[int, list] = defaultdict(list)
     for event in all_events:
         minute = get_event_minute(event)
-        bucket = minute // WINDOW_MINUTES
+        bucket = int(minute // WINDOW_MINUTES)
         buckets[bucket].append(event)
 
     sorted_buckets = sorted(buckets.keys())
@@ -143,8 +137,8 @@ def main():
     # ── Step 2: send event windows ────────────────────────────────────────────
     for i, bucket_key in enumerate(sorted_buckets):
         events_in_window = buckets[bucket_key]
-        window_start     = bucket_key * WINDOW_MINUTES
-        window_end       = window_start + WINDOW_MINUTES - 1
+        window_start     = int(bucket_key * WINDOW_MINUTES)
+        window_end       = int(window_start + WINDOW_MINUTES - 1)
 
         xml_chunk = build_chunk_xml(match_id, events_in_window)
 
@@ -152,7 +146,6 @@ def main():
             res  = requests.post(FEED_URL, json={'xml': xml_chunk}, timeout=15)
             data = res.json()
 
-            # Surface the most useful info without flooding the terminal
             whistle_info = ''
             if data.get('whistle'):
                 w = data['whistle']
@@ -168,9 +161,9 @@ def main():
             )
 
         except requests.exceptions.Timeout:
-            print(f'[{i+1:02d}/{total_windows}] min {window_start}–{window_end} → TIMEOUT, continuing')
+            print(f'[{i+1:02d}/{total_windows}] min {window_start:02d}–{window_end:02d} → TIMEOUT, continuing')
         except Exception as e:
-            print(f'[{i+1:02d}/{total_windows}] min {window_start}–{window_end} → ERROR: {e}')
+            print(f'[{i+1:02d}/{total_windows}] min {window_start:02d}–{window_end:02d} → ERROR: {e}')
 
         # Sleep until next window — skip sleep after the last window
         if i < total_windows - 1:
