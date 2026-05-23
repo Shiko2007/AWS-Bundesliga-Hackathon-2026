@@ -28,7 +28,7 @@ export const allCards: ActionCard[] = [
     id: 'counter_attack_goal',
     name: 'Counter Attack Goal',
     description: 'Counter-attack goal. (12 pts)',
-    appliesTo: 'TEAM',
+    appliesTo: 'ONE_PLAYER',
     timing: 'BEFORE_MATCH',
     duration: 5400,
   },

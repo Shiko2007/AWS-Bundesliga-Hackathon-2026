@@ -40,6 +40,8 @@ function Login() {
         localStorage.setItem('team', data.team);
         localStorage.setItem('email', data.email);
         localStorage.setItem('token', data.token);
+        localStorage.setItem('savedCards', JSON.stringify(data.savedCards ?? []));
+        localStorage.setItem('cardsSegment', JSON.stringify(data.cards_segment ?? {}));
         
         const formationSlots: Record<string, string[]> = {
           '2-2-1':    ['DEF1','DEF2','MID1','MID2','ATT1'],

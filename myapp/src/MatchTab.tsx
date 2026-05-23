@@ -1,6 +1,5 @@
-// MatchTab.tsx
 import React, { useState } from 'react';
-import { ActionCard } from './data/cards';
+import { ActionCard, allCards } from './data/cards';
 import { Player, Position } from './data/teams';
 import grainTexture from './assets/images/grain.png';
 import matchBg from './assets/images/match.jpg';
@@ -8,33 +7,34 @@ import matchBg from './assets/images/match.jpg';
 const API_BASE = 'https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api';
 
 type Formation =
-  | '2-2-1'
-  | '1-2-2'
-  | '2-1-2'
-  | '1-3-1'
-  | '3-1-1'
-  | 'GK-2-1-1'
-  | 'GK-1-2-1'
-  | 'GK-1-1-2'
-  | 'GK-3-1'
-  | 'GK-2-2';
+  | '2-2-1' | '1-2-2' | '2-1-2' | '1-3-1' | '3-1-1'
+  | 'GK-2-1-1' | 'GK-1-2-1' | 'GK-1-1-2' | 'GK-3-1' | 'GK-2-2';
 
 type PlayedCard = {
   card: ActionCard;
   playerName: string;
   slot: string;
+  confirmed?: boolean;
 };
 
 type Props = {
-  selectedPlayers: {
-    [slotId: string]: Player | null;
-  };
+  selectedPlayers: { [slotId: string]: Player | null };
   formation: string;
   selectedCards: ActionCard[];
   setSelectedCards: React.Dispatch<React.SetStateAction<ActionCard[]>>;
   randomCards: ActionCard[];
   cardsSaved: boolean;
   setCardsSaved: React.Dispatch<React.SetStateAction<boolean>>;
+  matchId: string | null;
+  setMatchId: React.Dispatch<React.SetStateAction<string | null>>;
+  matchPoints: number;
+  matchEnded: boolean;
+  setMatchEnded: React.Dispatch<React.SetStateAction<boolean>>;
+  lingerCountdown: number | null;
+  playedCards: PlayedCard[];
+  setPlayedCards: React.Dispatch<React.SetStateAction<PlayedCard[]>>;
+  onEnterMatch: () => void;
+  onNavigateToLeaderboard: () => void;
 };
 
 function MatchTab({
@@ -45,98 +45,46 @@ function MatchTab({
   randomCards,
   cardsSaved,
   setCardsSaved,
+  matchId,
+  setMatchId,
+  matchPoints,
+  matchEnded,
+  setMatchEnded,
+  lingerCountdown,
+  playedCards,
+  setPlayedCards,
+  onEnterMatch,
+  onNavigateToLeaderboard,
 }: Props) {
 
-  const [playedCards, setPlayedCards]     = useState<PlayedCard[]>([]);
-  const [matchPoints, setMatchPoints]     = useState(0);
   const [enteringMatch, setEnteringMatch] = useState(false);
-  const [matchId, setMatchId]             = useState<string | null>(null);
   const [saving, setSaving]               = useState(false);
+  const [savingCards, setSavingCards]     = useState(false);
 
   const formations: Record<Formation, string[]> = {
-    '2-2-1':    ['DEF1', 'DEF2', 'MID1', 'MID2', 'ATT1'],
-    '1-2-2':    ['DEF1', 'MID1', 'MID2', 'ATT1', 'ATT2'],
-    '2-1-2':    ['DEF1', 'DEF2', 'MID1', 'ATT1', 'ATT2'],
-    '1-3-1':    ['DEF1', 'MID1', 'MID2', 'MID3', 'ATT1'],
-    '3-1-1':    ['DEF1', 'DEF2', 'DEF3', 'MID1', 'ATT1'],
-    'GK-2-1-1': ['GK1', 'DEF1', 'DEF2', 'MID1', 'ATT1'],
-    'GK-1-2-1': ['GK1', 'DEF1', 'MID1', 'MID2', 'ATT1'],
-    'GK-1-1-2': ['GK1', 'DEF1', 'MID1', 'ATT1', 'ATT2'],
-    'GK-3-1':   ['GK1', 'DEF1', 'DEF2', 'DEF3', 'ATT1'],
-    'GK-2-2':   ['GK1', 'DEF1', 'DEF2', 'ATT1', 'ATT2'],
+    '2-2-1':    ['DEF1','DEF2','MID1','MID2','ATT1'],
+    '1-2-2':    ['DEF1','MID1','MID2','ATT1','ATT2'],
+    '2-1-2':    ['DEF1','DEF2','MID1','ATT1','ATT2'],
+    '1-3-1':    ['DEF1','MID1','MID2','MID3','ATT1'],
+    '3-1-1':    ['DEF1','DEF2','DEF3','MID1','ATT1'],
+    'GK-2-1-1': ['GK1','DEF1','DEF2','MID1','ATT1'],
+    'GK-1-2-1': ['GK1','DEF1','MID1','MID2','ATT1'],
+    'GK-1-1-2': ['GK1','DEF1','MID1','ATT1','ATT2'],
+    'GK-3-1':   ['GK1','DEF1','DEF2','DEF3','ATT1'],
+    'GK-2-2':   ['GK1','DEF1','DEF2','ATT1','ATT2'],
   };
 
   const slotPositions: Record<Formation, Record<string, React.CSSProperties>> = {
-    '2-2-1': {
-      ATT1: { left: '50%', top: '15%' },
-      MID1: { left: '30%', top: '43%' },
-      MID2: { left: '70%', top: '43%' },
-      DEF1: { left: '30%', top: '72%' },
-      DEF2: { left: '70%', top: '72%' },
-    },
-    '1-2-2': {
-      ATT1: { left: '30%', top: '18%' },
-      ATT2: { left: '70%', top: '18%' },
-      MID1: { left: '30%', top: '48%' },
-      MID2: { left: '70%', top: '48%' },
-      DEF1: { left: '50%', top: '75%' },
-    },
-    '2-1-2': {
-      ATT1: { left: '30%', top: '18%' },
-      ATT2: { left: '70%', top: '18%' },
-      MID1: { left: '50%', top: '48%' },
-      DEF1: { left: '30%', top: '75%' },
-      DEF2: { left: '70%', top: '75%' },
-    },
-    '1-3-1': {
-      ATT1: { left: '50%', top: '15%' },
-      MID1: { left: '25%', top: '45%' },
-      MID2: { left: '50%', top: '45%' },
-      MID3: { left: '75%', top: '45%' },
-      DEF1: { left: '50%', top: '75%' },
-    },
-    '3-1-1': {
-      ATT1: { left: '50%', top: '15%' },
-      MID1: { left: '50%', top: '45%' },
-      DEF1: { left: '22%', top: '75%' },
-      DEF2: { left: '50%', top: '75%' },
-      DEF3: { left: '78%', top: '75%' },
-    },
-    'GK-2-1-1': {
-      ATT1: { left: '50%', top: '12%' },
-      MID1: { left: '50%', top: '35%' },
-      DEF1: { left: '30%', top: '60%' },
-      DEF2: { left: '70%', top: '60%' },
-      GK1:  { left: '50%', top: '87%' },
-    },
-    'GK-1-2-1': {
-      ATT1: { left: '50%', top: '12%' },
-      MID1: { left: '30%', top: '42%' },
-      MID2: { left: '70%', top: '42%' },
-      DEF1: { left: '50%', top: '65%' },
-      GK1:  { left: '50%', top: '87%' },
-    },
-    'GK-1-1-2': {
-      ATT1: { left: '30%', top: '15%' },
-      ATT2: { left: '70%', top: '15%' },
-      MID1: { left: '50%', top: '42%' },
-      DEF1: { left: '50%', top: '65%' },
-      GK1:  { left: '50%', top: '87%' },
-    },
-    'GK-3-1': {
-      ATT1: { left: '50%', top: '15%' },
-      DEF1: { left: '22%', top: '58%' },
-      DEF2: { left: '50%', top: '58%' },
-      DEF3: { left: '78%', top: '58%' },
-      GK1:  { left: '50%', top: '87%' },
-    },
-    'GK-2-2': {
-      ATT1: { left: '30%', top: '18%' },
-      ATT2: { left: '70%', top: '18%' },
-      DEF1: { left: '30%', top: '62%' },
-      DEF2: { left: '70%', top: '62%' },
-      GK1:  { left: '50%', top: '87%' },
-    },
+    '2-2-1': { ATT1:{left:'50%',top:'15%'}, MID1:{left:'30%',top:'43%'}, MID2:{left:'70%',top:'43%'}, DEF1:{left:'30%',top:'72%'}, DEF2:{left:'70%',top:'72%'} },
+    '1-2-2': { ATT1:{left:'30%',top:'18%'}, ATT2:{left:'70%',top:'18%'}, MID1:{left:'30%',top:'48%'}, MID2:{left:'70%',top:'48%'}, DEF1:{left:'50%',top:'75%'} },
+    '2-1-2': { ATT1:{left:'30%',top:'18%'}, ATT2:{left:'70%',top:'18%'}, MID1:{left:'50%',top:'48%'}, DEF1:{left:'30%',top:'75%'}, DEF2:{left:'70%',top:'75%'} },
+    '1-3-1': { ATT1:{left:'50%',top:'15%'}, MID1:{left:'25%',top:'45%'}, MID2:{left:'50%',top:'45%'}, MID3:{left:'75%',top:'45%'}, DEF1:{left:'50%',top:'75%'} },
+    '3-1-1': { ATT1:{left:'50%',top:'15%'}, MID1:{left:'50%',top:'45%'}, DEF1:{left:'22%',top:'75%'}, DEF2:{left:'50%',top:'75%'}, DEF3:{left:'78%',top:'75%'} },
+    'GK-2-1-1': { ATT1:{left:'50%',top:'12%'}, MID1:{left:'50%',top:'35%'}, DEF1:{left:'30%',top:'60%'}, DEF2:{left:'70%',top:'60%'}, GK1:{left:'50%',top:'87%'} },
+    'GK-1-2-1': { ATT1:{left:'50%',top:'12%'}, MID1:{left:'30%',top:'42%'}, MID2:{left:'70%',top:'42%'}, DEF1:{left:'50%',top:'65%'}, GK1:{left:'50%',top:'87%'} },
+    'GK-1-1-2': { ATT1:{left:'30%',top:'15%'}, ATT2:{left:'70%',top:'15%'}, MID1:{left:'50%',top:'42%'}, DEF1:{left:'50%',top:'65%'}, GK1:{left:'50%',top:'87%'} },
+    'GK-3-1':   { ATT1:{left:'50%',top:'15%'}, DEF1:{left:'22%',top:'58%'}, DEF2:{left:'50%',top:'58%'}, DEF3:{left:'78%',top:'58%'}, GK1:{left:'50%',top:'87%'} },
+    'GK-2-2':   { ATT1:{left:'30%',top:'18%'}, ATT2:{left:'70%',top:'18%'}, DEF1:{left:'30%',top:'62%'}, DEF2:{left:'70%',top:'62%'}, GK1:{left:'50%',top:'87%'} },
   };
 
   const currentFormation = formation as Formation;
@@ -150,43 +98,58 @@ function MatchTab({
 
   const toggleCard = (card: ActionCard) => {
     const exists = selectedCards.some((c) => c.id === card.id);
-    if (exists) {
-      setSelectedCards(selectedCards.filter((c) => c.id !== card.id));
-      return;
-    }
-    if (selectedCards.length >= 5) {
-      alert('You can only choose 5 cards');
-      return;
-    }
+    if (exists) { setSelectedCards(selectedCards.filter((c) => c.id !== card.id)); return; }
+    if (selectedCards.length >= 5) { alert('You can only choose 5 cards'); return; }
     setSelectedCards([...selectedCards, card]);
   };
 
-  const saveCards = () => {
-    if (selectedCards.length !== 5) {
-      alert('Please choose exactly 5 cards');
-      return;
+  const saveCards = async () => {
+    if (selectedCards.length !== 5) { alert('Please choose exactly 5 cards'); return; }
+
+    const token = localStorage.getItem('token');
+    if (!token) { alert('You are not logged in.'); return; }
+
+    setSavingCards(true);
+    try {
+      const res = await fetch(`${API_BASE}/cards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ cards: selectedCards.map((card) => card.id) }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (data.error === 'Line-ups announced') {
+          alert('Lineups are announced — your cards were already locked.');
+          return;
+        }
+        alert(data.error || 'Failed to save cards.');
+        return;
+      }
+
+      localStorage.setItem('savedCards', JSON.stringify(selectedCards.map((c) => c.id)));
+      alert('Cards locked in!');
+    } catch (err) {
+      console.error('saveCards error:', err);
+      alert('Network error — please try again.');
+    } finally {
+      setSavingCards(false);
     }
-    setCardsSaved(true);
   };
 
-  const editCards = () => {
-    setCardsSaved(false);
-    setPlayedCards([]);
-  };
-
-  // ── Enter match ─────────────────────────────────────────────────────────────
   const handleEnterMatch = async () => {
     if (enteringMatch) return;
     setEnteringMatch(true);
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        alert('You are not logged in.');
-        return;
-      }
+      if (!token) { alert('You are not logged in.'); return; }
 
-      const res  = await fetch(`${API_BASE}/enter`, {
+      const res = await fetch(`${API_BASE}/enter`, {
         method: 'POST',
         headers: {
           'Content-Type':  'application/json',
@@ -198,7 +161,7 @@ function MatchTab({
 
       if (!res.ok || !data.success) {
         if (data.reason === 'lineups_not_announced') {
-          alert('Lineups haven\'t been announced yet — check back closer to kick-off.');
+          alert("Lineups haven't been announced yet — check back closer to kick-off.");
         } else {
           alert(data.error || 'Could not enter match.');
         }
@@ -207,6 +170,46 @@ function MatchTab({
 
       setMatchId(data.matchId);
       setCardsSaved(true);
+      setMatchEnded(false);
+
+      let restoredCards: ActionCard[] = [];
+      if (data.savedCards && data.savedCards.length > 0) {
+        restoredCards = allCards.filter((card) => data.savedCards.includes(card.id));
+        setSelectedCards(restoredCards);
+      }
+
+      if (data.cards_segment) {
+        const seg = data.cards_segment;
+        const restored: PlayedCard[] = [];
+
+        for (let i = 1; i <= 5; i++) {
+          const cardId   = seg[`Card_${i}`];
+          const isPlayed = seg[`Card_${i}_Played`] === true || seg[`Card_${i}_Played`] === 1;
+          const playerId = seg[`Card_${i}_Player`];
+
+          if (!cardId || !isPlayed) continue;
+
+          const card = restoredCards.find((c) => c.id === cardId);
+          if (!card) continue;
+
+          const slot = Object.entries(selectedPlayers).find(
+            ([, player]) => player && (player.id === playerId || player.name === playerId)
+          )?.[0] ?? (playerId === 'TEAM' ? 'TEAM' : 'UNKNOWN');
+
+          const playerName =
+            playerId === 'TEAM'
+              ? 'Whole Team'
+              : (selectedPlayers[slot]?.name ?? playerId ?? 'Unknown');
+
+          restored.push({ card, playerName, slot, confirmed: true });
+        }
+
+        if (restored.length > 0) {
+          setPlayedCards(restored);
+        }
+      }
+
+      onEnterMatch();
     } catch (err) {
       console.error('enterMatch error:', err);
       alert('Network error — please try again.');
@@ -215,37 +218,32 @@ function MatchTab({
     }
   };
 
-  // ── Save (play) all assigned cards ──────────────────────────────────────────
   const handleSave = async () => {
     if (saving) return;
-
-    if (playedCards.length === 0) {
-      alert('Assign at least 1 card to a player before saving.');
-      return;
-    }
+    if (playedCards.length === 0) { alert('Assign at least 1 card to a player before saving.'); return; }
 
     const token = localStorage.getItem('token');
-    if (!token) {
-      alert('You are not logged in.');
+    if (!token) { alert('You are not logged in.'); return; }
+
+    const unconfirmedCards = playedCards.filter((p) => !p.confirmed);
+
+    if (unconfirmedCards.length === 0) {
+      alert('All cards are already activated.');
       return;
     }
 
-    // Build the cards payload: one entry per played card
-    const cardsPayload = playedCards.map(({ card, slot }) => {
+    const cardsPayload = unconfirmedCards.map(({ card, slot }) => {
       const player = selectedPlayers[slot];
       return {
         card_name: card.id,
-        duration:  card.duration,          // seconds — must exist on ActionCard
-        player_id: slot === 'TEAM'
-          ? 'TEAM'
-          : (player?.id ?? player?.name ?? slot), // fall back gracefully
+        duration:  card.duration,
+        player_id: slot === 'TEAM' ? 'TEAM' : (player?.id ?? player?.name ?? slot),
       };
-    });
+});
 
     setSaving(true);
-
     try {
-      const res  = await fetch(`${API_BASE}/activate_card`, {
+      const res = await fetch(`${API_BASE}/activate_card`, {
         method: 'POST',
         headers: {
           'Content-Type':  'application/json',
@@ -255,13 +253,8 @@ function MatchTab({
       });
 
       const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Failed to save cards.'); return; }
 
-      if (!res.ok) {
-        alert(data.error || 'Failed to save cards.');
-        return;
-      }
-
-      // Report any per-card failures
       const failed = (data.results as Array<{ card_name: string; success: boolean; error?: string }>)
         .filter((r) => !r.success);
 
@@ -269,11 +262,15 @@ function MatchTab({
         const msgs = failed.map((f) => `• ${f.card_name}: ${f.error}`).join('\n');
         alert(`Some cards failed to activate:\n${msgs}`);
       } else {
+        setPlayedCards((prev) =>
+          prev.map((p) =>
+            unconfirmedCards.some((u) => u.card.id === p.card.id)
+              ? { ...p, confirmed: true }
+              : p
+          )
+        );
         alert('All cards played successfully!');
       }
-
-      // Return to card-selection screen regardless
-      editCards();
     } catch (err) {
       console.error('handleSave error:', err);
       alert('Network error — please try again.');
@@ -285,25 +282,20 @@ function MatchTab({
   const handleCardDropOnPlayer = (e: React.DragEvent, slot: string) => {
     const card   = JSON.parse(e.dataTransfer.getData('card')) as ActionCard;
     const player = selectedPlayers[slot];
-    if (!player)                  { alert('Drop the card on a selected player'); return; }
+    if (!player)                   { alert('Drop the card on a selected player'); return; }
     if (card.appliesTo === 'TEAM') { alert('This card is for the whole team, not one player'); return; }
-    const alreadyPlayed = playedCards.some((played) => played.card.id === card.id);
-    if (alreadyPlayed)            { alert('This card was already played'); return; }
+    if (playedCards.some((p) => p.card.id === card.id)) { alert('This card was already played'); return; }
     setPlayedCards([...playedCards, { card, playerName: player.name, slot }]);
   };
 
-  const removePlayedCard = (cardId: string) => {
-    setPlayedCards(playedCards.filter((played) => played.card.id !== cardId));
-  };
+  const removePlayedCard    = (cardId: string) => setPlayedCards(playedCards.filter((p) => p.card.id !== cardId));
+  const isCardPlayed        = (cardId: string) => playedCards.some((p) => p.card.id === cardId);
+  const getCardPlayedOnSlot = (slot: string)   => playedCards.filter((p) => p.slot === slot);
 
   const playTeamCard = (card: ActionCard) => {
-    const alreadyPlayed = playedCards.some((played) => played.card.id === card.id);
-    if (alreadyPlayed) { alert('This card was already played'); return; }
+    if (playedCards.some((p) => p.card.id === card.id)) { alert('This card was already played'); return; }
     setPlayedCards([...playedCards, { card, playerName: 'Whole Team', slot: 'TEAM' }]);
   };
-
-  const isCardPlayed        = (cardId: string) => playedCards.some((played) => played.card.id === cardId);
-  const getCardPlayedOnSlot = (slot: string)   => playedCards.filter((played) => played.slot === slot);
 
   const positionAccentColor = (pos: Position) => {
     if (pos === 'GK')  return '#f5a623';
@@ -312,26 +304,43 @@ function MatchTab({
     return '#d7040f';
   };
 
-  const cardTypeColor = (card: ActionCard) =>
-    card.appliesTo === 'TEAM' ? '#7ed321' : '#ffb4aa';
+  const cardTypeColor = (card: ActionCard) => card.appliesTo === 'TEAM' ? '#7ed321' : '#ffb4aa';
 
   const renderPlayer = (slot: string, player: Player) => {
-    const cardsOnThisPlayer = getCardPlayedOnSlot(slot);
-    return (
-      <div
-        style={styles.selectedPlayerContainer}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => handleCardDropOnPlayer(e, slot)}
-      >
-        {player.image && (
-          <img src={player.image} alt={player.name} style={styles.selectedPlayerImage} />
-        )}
-        <span style={styles.selectedPlayerName}>{player.name}</span>
-        {cardsOnThisPlayer.length > 0 && (
-          <span style={styles.cardBadge}>{cardsOnThisPlayer.length} card</span>
-        )}
-      </div>
-    );
+  const cardsOnThisPlayer = getCardPlayedOnSlot(slot);
+  const hasConfirmed      = cardsOnThisPlayer.some((p) => p.confirmed);
+  return (
+    <div
+      style={styles.selectedPlayerContainer}
+      draggable={false}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => handleCardDropOnPlayer(e, slot)}
+    >
+      {player.image && (
+        <img
+          src={player.image}
+          alt={player.name}
+          style={styles.selectedPlayerImage}
+          draggable={false}
+        />
+      )}
+      <span style={styles.selectedPlayerName}>{player.name}</span>
+      {cardsOnThisPlayer.length > 0 && (
+        <span style={{
+          ...styles.cardBadge,
+          backgroundColor: hasConfirmed ? '#7ed321' : '#d7040f',
+        }}>
+          {cardsOnThisPlayer.length} card{hasConfirmed ? ' ✓' : ''}
+        </span>
+      )}
+    </div>
+  );
+};
+
+  const formatCountdown = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   // ── Card selection screen ───────────────────────────────────────────────────
@@ -339,7 +348,6 @@ function MatchTab({
     return (
       <div style={styles.wrapper}>
         <div style={{ ...styles.grain, backgroundImage: `url(${grainTexture})` }} />
-
         <div style={styles.selectionInner}>
           <p style={styles.eyebrow}></p>
           <h2 style={styles.pageTitle}>CHOOSE YOUR CARDS</h2>
@@ -359,16 +367,9 @@ function MatchTab({
                 <div
                   key={card.id}
                   onClick={() => toggleCard(card)}
-                  style={{
-                    ...styles.card,
-                    ...(selected ? styles.cardSelected : {}),
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!selected) e.currentTarget.style.borderColor = '#554240';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!selected) e.currentTarget.style.borderColor = '#2a2a2a';
-                  }}
+                  style={{ ...styles.card, ...(selected ? styles.cardSelected : {}) }}
+                  onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = '#554240'; }}
+                  onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = '#2a2a2a'; }}
                 >
                   <div style={styles.cardHeader}>
                     <span style={{ ...styles.cardTypePill, color: cardTypeColor(card), borderColor: cardTypeColor(card) }}>
@@ -388,22 +389,19 @@ function MatchTab({
 
           <div style={styles.buttonRow}>
             <button
-              style={styles.saveButton}
+              style={{ ...styles.saveButton, opacity: savingCards ? 0.6 : 1, cursor: savingCards ? 'wait' : 'pointer' }}
               onClick={saveCards}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#d7040f'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.boxShadow = 'none'; }}
+              disabled={savingCards}
+              onMouseEnter={(e) => { if (!savingCards) { e.currentTarget.style.backgroundColor = '#d7040f'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.boxShadow = 'none'; } }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.color = '#1a1c1c'; e.currentTarget.style.boxShadow = '4px 4px 0 0 rgba(0,0,0,1)'; }}
               onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)'; e.currentTarget.style.boxShadow = 'none'; }}
               onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              LOCK IN CARDS
+              {savingCards ? 'SAVING...' : 'LOCK IN CARDS'}
             </button>
 
             <button
-              style={{
-                ...styles.enterMatchButton,
-                opacity: enteringMatch ? 0.6 : 1,
-                cursor:  enteringMatch ? 'wait' : 'pointer',
-              }}
+              style={{ ...styles.enterMatchButton, opacity: enteringMatch ? 0.6 : 1, cursor: enteringMatch ? 'wait' : 'pointer' }}
               onClick={handleEnterMatch}
               disabled={enteringMatch}
               onMouseEnter={(e) => { if (!enteringMatch) { e.currentTarget.style.backgroundColor = '#d7040f'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.boxShadow = 'none'; } }}
@@ -419,25 +417,56 @@ function MatchTab({
     );
   }
 
-  // ── Match preview screen ────────────────────────────────────────────────────
+  // ── Match ended linger screen ───────────────────────────────────────────────
+  if (matchEnded) {
+    return (
+      <div style={{ ...styles.wrapper, backgroundImage: `url(${matchBg})` }}>
+        <div style={{ ...styles.grain, backgroundImage: `url(${grainTexture})` }} />
+        <div style={styles.selectionInner}>
+          <p style={styles.eyebrow}>FULL TIME</p>
+          <h2 style={styles.pageTitle}>MATCH OVER</h2>
+
+          <div style={styles.pointsPolaroid}>
+            <div style={styles.pointsPolaroidInner}>
+              <span style={styles.pointsPolaroidLabel}>FINAL POINTS</span>
+              <span style={styles.pointsPolaroidValue}>{matchPoints.toLocaleString()}</span>
+            </div>
+          </div>
+
+          {lingerCountdown !== null && (
+            <p style={{ color: '#dcc0bd', marginTop: 24, fontSize: 14, textAlign: 'center' }}>
+              Heading to leaderboard in{' '}
+              <span style={{ color: '#ffb4aa', fontWeight: 700 }}>
+                {formatCountdown(lingerCountdown)}
+              </span>
+            </p>
+          )}
+
+          <button
+            style={{ ...styles.saveButton, marginTop: 32 }}
+            onClick={onNavigateToLeaderboard}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#d7040f'; e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.color = '#1a1c1c'; }}
+          >
+            GO TO LEADERBOARD →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Match live screen ───────────────────────────────────────────────────────
   return (
     <div style={{ ...styles.wrapper, backgroundImage: `url(${matchBg})` }}>
       <div style={{ ...styles.grain, backgroundImage: `url(${grainTexture})` }} />
 
-      {/* Header */}
       <header style={styles.header}>
         <div>
           <p style={styles.eyebrow}>MATCH DAY</p>
           <h2 style={styles.headerTitle}>MATCH PREVIEW</h2>
         </div>
-
-        {/* SAVE button now calls handleSave */}
         <button
-          style={{
-            ...styles.editButton,
-            opacity: saving ? 0.6 : 1,
-            cursor:  saving ? 'wait' : 'pointer',
-          }}
+          style={{ ...styles.editButton, opacity: saving ? 0.6 : 1, cursor: saving ? 'wait' : 'pointer' }}
           onClick={handleSave}
           disabled={saving}
           onMouseEnter={(e) => { if (!saving) { e.currentTarget.style.borderColor = '#d7040f'; e.currentTarget.style.color = '#ffb4aa'; } }}
@@ -447,7 +476,6 @@ function MatchTab({
         </button>
       </header>
 
-      {/* Points counter */}
       <div style={styles.pointsPolaroid}>
         <div style={styles.pointsPolaroidInner}>
           <span style={styles.pointsPolaroidLabel}>MATCH POINTS</span>
@@ -457,16 +485,11 @@ function MatchTab({
 
       <p style={styles.helperText}>TAP TEAM CARDS · DRAG PLAYER CARDS ONTO PLAYERS</p>
 
-      {/* Pitch */}
       <div style={styles.pitch}>
         <div style={styles.halfwayLine} />
         <div style={styles.centerCircle} />
-
         {formations[currentFormation].map((slot) => (
-          <div
-            key={slot}
-            style={{ ...styles.slot, ...slotPositions[currentFormation][slot] }}
-          >
+          <div key={slot} style={{ ...styles.slot, ...slotPositions[currentFormation][slot] }}>
             {selectedPlayers[slot]
               ? renderPlayer(slot, selectedPlayers[slot]!)
               : (
@@ -481,12 +504,12 @@ function MatchTab({
         ))}
       </div>
 
-      {/* Cards bench */}
       <p style={styles.sectionLabel}>YOUR CARDS</p>
       <div style={styles.cardBench}>
         {selectedCards.map((card) => {
           const played      = isCardPlayed(card.id);
           const playedEntry = playedCards.find((p) => p.card.id === card.id);
+          const confirmed   = playedEntry?.confirmed ?? false;
           return (
             <div
               key={card.id}
@@ -497,31 +520,33 @@ function MatchTab({
                 ...styles.benchCard,
                 ...(played ? styles.benchCardPlayed : {}),
                 cursor:      card.appliesTo === 'TEAM' ? 'pointer' : played ? 'not-allowed' : 'grab',
-                borderColor: played ? '#2a2a2a' : cardTypeColor(card),
+                borderColor: confirmed ? '#7ed321' : played ? '#554240' : cardTypeColor(card),
               }}
-              onMouseEnter={(e) => {
-                if (!played) e.currentTarget.style.borderColor = card.appliesTo === 'TEAM' ? '#7ed321' : '#d7040f';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = played ? '#2a2a2a' : cardTypeColor(card);
-              }}
+              onMouseEnter={(e) => { if (!played) e.currentTarget.style.borderColor = card.appliesTo === 'TEAM' ? '#7ed321' : '#d7040f'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = confirmed ? '#7ed321' : played ? '#554240' : cardTypeColor(card); }}
             >
-              <span style={{ ...styles.benchCardType, color: cardTypeColor(card) }}>
+              <span style={{ ...styles.benchCardType, color: confirmed ? '#7ed321' : cardTypeColor(card) }}>
                 {card.appliesTo === 'TEAM' ? 'TEAM' : 'PLAYER'}
               </span>
               <p style={styles.benchCardName}>{card.name}</p>
-
               {played && (
                 <>
-                  <p style={styles.playedOn}>→ {playedEntry?.playerName}</p>
-                  <button
-                    style={styles.changeButton}
-                    onClick={(e) => { e.stopPropagation(); removePlayedCard(card.id); }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = '#ffb4aa'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = '#dcc0bd'; }}
-                  >
-                    CHANGE
-                  </button>
+                  <p style={styles.playedOn}>
+                    → {playedEntry?.playerName}
+                    {confirmed && (
+                      <span style={{ color: '#7ed321', marginLeft: 4 }}>✓</span>
+                    )}
+                  </p>
+                  {!confirmed && (
+                    <button
+                      style={styles.changeButton}
+                      onClick={(e) => { e.stopPropagation(); removePlayedCard(card.id); }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#ffb4aa'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#dcc0bd'; }}
+                    >
+                      CHANGE
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -890,7 +915,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '8px',
     fontFamily: "'Bebas Neue', sans-serif",
     letterSpacing: '0.06em',
-    backgroundColor: '#d7040f',
     color: '#fff',
     padding: '1px 5px',
   },

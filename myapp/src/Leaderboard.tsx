@@ -1,75 +1,165 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import grainTexture from './assets/images/grain.png';
 import leaderboardBg from './assets/images/leaderboard-bg.jpg';
 
 type Category = 'worldwide' | 'team';
 
-const categoryData: Record<Category, { rank: number; name: string; points: number; isCurrentUser?: boolean }[]> = {
-  worldwide: [
-    { rank: 1,    name: 'Müller_Fan99', points: 18200 },
-    { rank: 2,    name: 'BVBlegend',    points: 17850 },
-    { rank: 3,    name: 'LevyKing',     points: 16400 },
-    { rank: 4,    name: 'KaiserFranz',  points: 14900 },
-    { rank: 1250, name: 'You',          points: 12450, isCurrentUser: true },
-  ],
-  team: [
-    { rank: 1, name: 'FC_Max',        points: 15300 },
-    { rank: 2, name: 'AllianzArena1', points: 14900 },
-    { rank: 3, name: 'MiaSanMia',     points: 14100 },
-    { rank: 4, name: 'BavarianKing',  points: 13200 },
-    { rank: 5, name: 'You',           points: 12450, isCurrentUser: true },
-  ],
-};
-
-const categoryRanks: Record<Category, string> = {
-  worldwide: '#1,250',
-  team: '#5',
+type LeaderboardEntry = {
+  Email: string;
+  Team: string;
+  Points: number;
+  GamePoints: number;
 };
 
 const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32', '#aaaaaa'];
 
-const weeklyPoints = 1340;
-
 function Leaderboard() {
   const [activeCategory, setActiveCategory] = useState<Category>('worldwide');
-  const entries = categoryData[activeCategory];
+  const [loading, setLoading] = useState(true);
+
+  const [globalTop3, setGlobalTop3] = useState<LeaderboardEntry[]>([]);
+  const [teamTop3, setTeamTop3] = useState<LeaderboardEntry[]>([]);
+
+  const [globalUserRank, setGlobalUserRank] = useState<number | null>(null);
+  const [teamUserRank, setTeamUserRank] = useState<number | null>(null);
+
+  const [globalUserEntry, setGlobalUserEntry] =
+    useState<LeaderboardEntry | null>(null);
+  const [teamUserEntry, setTeamUserEntry] =
+    useState<LeaderboardEntry | null>(null);
+
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        const email = localStorage.getItem('email') || '';
+        const team = localStorage.getItem('team') || '';
+
+        const response = await fetch(
+  'https://20trt2erj1.execute-api.eu-central-1.amazonaws.com/Development/api/LeaderBoard',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      team,
+    }),
+  }
+);
+
+        const data = await response.json();
+      console.log('Leaderboard data:', data);
+        if (data.success) {
+          setGlobalTop3(data.globalTop3 || []);
+          setTeamTop3(data.teamTop3 || []);
+          setGlobalUserRank(data.globalUserRank || null);
+          setTeamUserRank(data.teamUserRank || null);
+          setGlobalUserEntry(data.globalUserEntry || null);
+          setTeamUserEntry(data.teamUserEntry || null);
+        }
+      } catch (error) {
+        console.error('Leaderboard error:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLeaderboard();
+  }, []);
+
+  const entries: LeaderboardEntry[] =
+    activeCategory === 'worldwide'
+      ? [
+          ...globalTop3,
+          ...(globalUserEntry &&
+          !globalTop3.some((user) => user.Email === globalUserEntry.Email)
+            ? [globalUserEntry]
+            : []),
+        ]
+      : [
+          ...teamTop3,
+          ...(teamUserEntry &&
+          !teamTop3.some((user) => user.Email === teamUserEntry.Email)
+            ? [teamUserEntry]
+            : []),
+        ];
+
+  const getDisplayedRank = (entry: LeaderboardEntry, index: number) => {
+    if (
+      activeCategory === 'worldwide' &&
+      globalUserEntry &&
+      entry.Email === globalUserEntry.Email
+    ) {
+      return globalUserRank || index + 1;
+    }
+
+    if (
+      activeCategory === 'team' &&
+      teamUserEntry &&
+      entry.Email === teamUserEntry.Email
+    ) {
+      return teamUserRank || index + 1;
+    }
+
+    return index + 1;
+  };
+
+  const isCurrentUser = (entry: LeaderboardEntry) => {
+    const currentEmail = localStorage.getItem('email');
+    return entry.Email === currentEmail;
+  };
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          ...styles.wrapper,
+          backgroundImage: `url(${leaderboardBg})`,
+          color: '#fff',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        Loading leaderboard...
+      </div>
+    );
+  }
 
   return (
-    <div style={{
-      ...styles.wrapper,
-      backgroundImage: `url(${leaderboardBg})`,
-    }}>
-      {/* Grain overlay */}
+    <div
+      style={{
+        ...styles.wrapper,
+        backgroundImage: `url(${leaderboardBg})`,
+      }}
+    >
       <div style={{ ...styles.grain, backgroundImage: `url(${grainTexture})` }} />
 
-      {/* Title */}
       <div style={styles.titleBlock}>
         <h2 style={styles.title}>LEADERBOARDS</h2>
         <div style={styles.titleUnderline} />
       </div>
 
-      {/* Polaroids row */}
       <div style={styles.polaroidRow}>
-        {/* Total points */}
         <div style={styles.polaroid}>
           <div style={styles.polaroidInner}>
             <span style={styles.polaroidLabel}>YOUR POINTS</span>
-            <span style={styles.polaroidPoints}>12,450</span>
+            <span style={styles.polaroidPoints}>
+              {(globalUserEntry?.Points || 0).toLocaleString()}
+            </span>
           </div>
         </div>
 
-        {/* Weekly points */}
         <div style={styles.polaroid}>
           <div style={styles.polaroidInner}>
-            <span style={styles.polaroidLabel}>WEEKLY POINTS</span>
-            <span style={styles.polaroidPoints}>{weeklyPoints.toLocaleString()}</span>
-            <span style={styles.polaroidDelta}>
+            <span style={styles.polaroidLabel}>GAME POINTS</span>
+            <span style={styles.polaroidPoints}>
+              {(globalUserEntry?.GamePoints || 0).toLocaleString()}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Category buttons */}
       <nav style={styles.nav}>
         {(['worldwide', 'team'] as Category[]).map((cat) => (
           <button
@@ -78,48 +168,59 @@ function Leaderboard() {
               ...styles.categoryBtn,
               ...(activeCategory === cat ? styles.categoryBtnActive : {}),
             }}
-            onMouseEnter={(e) => { if (activeCategory !== cat) e.currentTarget.style.borderColor = '#ffb4aa'; }}
-            onMouseLeave={(e) => { if (activeCategory !== cat) e.currentTarget.style.borderColor = 'transparent'; }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
-            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             onClick={() => setActiveCategory(cat)}
           >
-            <span style={styles.categoryLabel}>{cat.toUpperCase()}</span>
+            <span style={styles.categoryLabel}>
+              {cat === 'worldwide' ? 'WORLDWIDE' : 'MY TEAM'}
+            </span>
+
             <div style={styles.categoryRight}>
               <span style={styles.rankLabel}>RANK</span>
-              <span style={styles.rankValue}>{categoryRanks[cat]}</span>
+              <span style={styles.rankValue}>
+                {cat === 'worldwide'
+                  ? `#${globalUserRank || '-'}`
+                  : `#${teamUserRank || '-'}`}
+              </span>
             </div>
           </button>
         ))}
       </nav>
 
-      {/* Leaderboard rows */}
       <div style={styles.listWrapper}>
         {entries.map((entry, i) => {
-          const colorIndex = Math.min(entry.rank - 1, 3);
-          const isTop4 = entry.rank <= 4;
+          const displayedRank = getDisplayedRank(entry, i);
+          const colorIndex = Math.min(displayedRank - 1, 3);
+          const isTop4 = displayedRank <= 4;
+          const currentUser = isCurrentUser(entry);
+
           return (
             <div
-              key={i}
+              key={`${entry.Email}-${i}`}
               style={{
                 ...styles.listRow,
-                ...(entry.isCurrentUser ? styles.listRowHighlight : {}),
+                ...(currentUser ? styles.listRowHighlight : {}),
               }}
             >
-              <span style={{
-                ...styles.listRank,
-                color: isTop4 ? medalColors[colorIndex] : '#ffb4aa',
-              }}>
-                #{entry.rank.toLocaleString()}
+              <span
+                style={{
+                  ...styles.listRank,
+                  color: isTop4 ? medalColors[colorIndex] : '#ffb4aa',
+                }}
+              >
+                #{displayedRank.toLocaleString()}
               </span>
-              <span style={{
-                ...styles.listName,
-                ...(entry.isCurrentUser ? styles.listNameHighlight : {}),
-              }}>
-                {entry.name}
+
+              <span
+                style={{
+                  ...styles.listName,
+                  ...(currentUser ? styles.listNameHighlight : {}),
+                }}
+              >
+                {currentUser ? 'You' : entry.Email}
               </span>
+
               <span style={styles.listPoints}>
-                {entry.points.toLocaleString()}
+                {entry.Points.toLocaleString()}
                 <span style={styles.listPtsSuffix}> pts</span>
               </span>
             </div>
@@ -131,7 +232,6 @@ function Leaderboard() {
 }
 
 const styles: { [key: string]: React.CSSProperties } = {
-
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
@@ -148,15 +248,16 @@ const styles: { [key: string]: React.CSSProperties } = {
 
   grain: {
     position: 'absolute',
-    top: 0, left: 0,
-    width: '100%', height: '100%',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
     pointerEvents: 'none',
     zIndex: 9999,
     opacity: 0.06,
     backgroundRepeat: 'repeat',
   },
 
-  // ── Title ─────────────────────────────────────
   titleBlock: {
     flexShrink: 0,
     marginTop: '18px',
@@ -179,7 +280,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginTop: '3px',
   },
 
-  // ── Polaroids ─────────────────────────────────
   polaroidRow: {
     display: 'flex',
     gap: '8px',
@@ -196,7 +296,7 @@ const styles: { [key: string]: React.CSSProperties } = {
 
   polaroidInner: {
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '6px 0 2px',
@@ -208,7 +308,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '10px',
     letterSpacing: '0.1em',
     color: '#121414',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
   },
 
   polaroidPoints: {
@@ -219,18 +319,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     letterSpacing: '0.02em',
   },
 
-  polaroidDelta: {
-    fontFamily: "'Lexend', sans-serif",
-    fontSize: '9px',
-    fontWeight: 400,
-    color: '#555',
-    marginTop: '2px',
-  },
-
-  // ── Nav ───────────────────────────────────────
   nav: {
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'column',
     gap: '3px',
     flexShrink: 0,
   },
@@ -246,10 +337,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
     transition: 'border-color 0.2s, transform 0.1s',
     width: '100%',
-    boxSizing: 'border-box' as const,
+    boxSizing: 'border-box',
   },
 
-  categoryBtnActive: { borderColor: '#ffb4aa' },
+  categoryBtnActive: {
+    borderColor: '#ffb4aa',
+  },
 
   categoryLabel: {
     fontFamily: "'Bebas Neue', sans-serif",
@@ -259,7 +352,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     lineHeight: 1.2,
   },
 
-  categoryRight: { textAlign: 'right' as const },
+  categoryRight: {
+    textAlign: 'right',
+  },
 
   rankLabel: {
     fontFamily: "'Lexend', sans-serif",
@@ -267,7 +362,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 700,
     letterSpacing: '0.1em',
     color: '#888',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
     display: 'block',
     lineHeight: 1.2,
   },
@@ -281,10 +376,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'block',
   },
 
-  // ── Rows ──────────────────────────────────────
   listWrapper: {
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'column',
     gap: '3px',
     flex: 1,
     minHeight: 0,
@@ -298,7 +392,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     backdropFilter: 'blur(4px)',
     gap: '8px',
     flex: 1,
-    minHeight: 0,
+    minHeight: '42px',
   },
 
   listRowHighlight: {
@@ -319,9 +413,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 700,
     color: '#e2e2e2',
     flex: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
 
-  listNameHighlight: { color: '#ffb4aa' },
+  listNameHighlight: {
+    color: '#ffb4aa',
+  },
 
   listPoints: {
     fontFamily: "'Bebas Neue', sans-serif",
